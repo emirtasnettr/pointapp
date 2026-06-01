@@ -1,0 +1,21 @@
+# Ortam değişkenleri deploy/.env içinden docker compose ile enjekte edilir.
+# Yer tutucular: API_DOMAIN, ADMIN_DOMAIN, CUSTOMER_DOMAIN, CADDY_EMAIL
+
+{
+	email {$CADDY_EMAIL}
+}
+
+{$API_DOMAIN} {
+	encode gzip
+	reverse_proxy api:5001
+}
+
+{$ADMIN_DOMAIN} {
+	encode gzip
+	reverse_proxy web-admin:3000
+}
+
+{$CUSTOMER_DOMAIN} {
+	encode gzip
+	reverse_proxy web-customer:3000
+}

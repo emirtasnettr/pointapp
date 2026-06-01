@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install
+        run: npm install
+
+      - name: Prisma validate
+        run: npm run db:validate
+        env:
+          DATABASE_URL: postgresql://point:point@localhost:5432/point?schema=public
+
+      - name: Prisma generate
+        run: npm run db:generate
+        env:
+          DATABASE_URL: postgresql://point:point@localhost:5432/point?schema=public
+
+      - name: Lint (when configured per package)
+        run: npm run lint || true
+
+      - name: Typecheck (when configured per package)
+        run: npm run typecheck || true

@@ -1,0 +1,29 @@
+{
+  "name": "@point/database",
+  "version": "0.0.1",
+  "private": true,
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "scripts": {
+    "prisma": "prisma",
+    "validate": "prisma validate",
+    "generate": "prisma generate",
+    "migrate": "prisma migrate dev",
+    "migrate:deploy": "prisma migrate deploy",
+    "push": "prisma db push",
+    "studio": "prisma studio",
+    "seed": "prisma db seed",
+    "geo:build-mahalle": "node prisma/scripts/build-istanbul-mahalle-from-ibb.mjs",
+    "build": "prisma generate"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.7.0",
+    "bcryptjs": "^3.0.3"
+  },
+  "devDependencies": {
+    "prisma": "^6.7.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.8.0"
+  }
+}

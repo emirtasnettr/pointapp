@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  font-feature-settings: 'rlig' 1, 'calt' 1;
+}
+
+/* Tanıtım sitesi: masaüstünde hafif ölçek (rem tabanlı Tailwind ile orantılı) */
+@media (min-width: 1024px) {
+  html:has(.marketing-site) {
+    font-size: 110%;
+  }
+}

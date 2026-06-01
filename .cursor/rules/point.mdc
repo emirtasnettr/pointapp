@@ -1,0 +1,15 @@
+---
+description: Point monorepo conventions (courier marketplace)
+globs:
+alwaysApply: true
+---
+
+# Point proje kuralları
+
+- **Monorepo**: `apps/api` (NestJS modular monolith), `apps/web-admin`, `apps/web-customer` (Next.js 15 + Tailwind), `apps/mobile-courier` ve `apps/mobile-customer` (Expo Router — ayrı uygulamalar), `packages/database` (Prisma). Yeni ortak kod için önce `packages/` altında paket değerlendir.
+- **Marka rengi**: `#16B24B`; koyu/açık tema ile tutarlı kullan; glassmorphism ve yumuşak gölgeler web’de tercih edilir.
+- **Backend**: Controller → Service → Prisma; iş kuralları serviste; RBAC izin slug’ları tek kaynakta. Storage, SMS ve ödeme için **provider interface** korunur; doğrudan vendor SDK çağrısı modül içinde adapter’da kalır.
+- **Veri**: Şema değişiklikleri yalnızca Prisma migration ile. Sipariş numarası ve BM/KM/BK/EK `publicId` üretimi için transaction/sequence kullan; yarış durumlarını göz önünde bulundur.
+- **Güvenlik**: JWT + refresh, audit ve rate limit varsayılanlarına uy; sistem ayarları yalnızca sistem yöneticisi izinleriyle.
+- **Mobil**: Konum gönderimi 30–60 sn aralığına uygun tasarla; Socket.IO ile uyumlu olay adları kullan (`location`, `delivery:status`).
+- **Dokümantasyon**: Mimari değişikliklerde `docs/ARCHITECTURE.md` güncellenmeli.

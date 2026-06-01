@@ -1,0 +1,112 @@
+# Üretim / staging stack — monorepo kökünden:
+#   cp deploy/env.example deploy/.env   # düzenleyin
+#   docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env build
+#   docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env run --rm migrate
+#   docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env up -d
+
+name: point-prod
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - point_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    networks: [point]
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ['redis-server', '--appendonly', 'yes']
+    volumes:
+      - point_redis_data:/data
+    networks: [point]
+
+  migrate:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.migrate
+    env_file: deploy/.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [point]
+    profiles: [init]
+
+  api:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.api
+    restart: unless-stopped
+    env_file: deploy/.env
+    volumes:
+      - point_api_storage:/app/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [point]
+
+  web-admin:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.web
+      args:
+        APP: web-admin
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        NEXT_PUBLIC_CUSTOMER_WEB_URL: ${NEXT_PUBLIC_CUSTOMER_WEB_URL}
+        NEXT_PUBLIC_MARKETING_WEB_URL: ${NEXT_PUBLIC_MARKETING_WEB_URL}
+    restart: unless-stopped
+    depends_on:
+      - api
+    networks: [point]
+
+  web-customer:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.web
+      args:
+        APP: web-customer
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        NEXT_PUBLIC_CUSTOMER_WEB_URL: ${NEXT_PUBLIC_CUSTOMER_WEB_URL}
+        NEXT_PUBLIC_MARKETING_WEB_URL: ${NEXT_PUBLIC_MARKETING_WEB_URL}
+    restart: unless-stopped
+    depends_on:
+      - api
+    networks: [point]
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    env_file: deploy/.env
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api
+      - web-admin
+      - web-customer
+    networks: [point]
+
+volumes:
+  point_pg_data:
+  point_redis_data:
+  point_api_storage:
+  caddy_data:
+  caddy_config:
+
+networks:
+  point:
+    driver: bridge

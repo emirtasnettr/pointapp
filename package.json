@@ -1,0 +1,71 @@
+{
+  "name": "point",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "devDependencies": {
+    "concurrently": "^9.1.0",
+    "cross-env": "^7.0.3"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "overrides": {
+    "@point/mobile-courier": {
+      "react": "19.1.0"
+    },
+    "@point/mobile-customer": {
+      "react": "19.1.0"
+    },
+    "@point/web-admin": {
+      "react": "18.3.1",
+      "react-dom": "18.3.1"
+    },
+    "@point/web-customer": {
+      "react": "18.3.1",
+      "react-dom": "18.3.1"
+    }
+  },
+  "scripts": {
+    "start": "npm run dev",
+    "build": "npm run build --workspaces --if-present",
+    "dev:api": "npm run dev -w @point/api",
+    "api:lan-ip": "npm run lan-ip -w @point/api",
+    "dev:web-admin": "npm run dev -w @point/web-admin",
+    "dev:web-customer": "npm run dev -w @point/web-customer",
+    "dev:mobile": "npm run start -w @point/mobile-courier",
+    "dev:mobile:courier": "npm run start -w @point/mobile-courier",
+    "dev:mobile:customer": "npm run start -w @point/mobile-customer",
+    "expo:customer": "npm run start -w @point/mobile-customer",
+    "expo:courier": "npm run start -w @point/mobile-courier",
+    "dev:mobile:courier:tunnel": "npm run start:tunnel -w @point/mobile-courier",
+    "dev:mobile:customer:tunnel": "npm run start:tunnel -w @point/mobile-customer",
+    "dev:mobile:customer:clear": "npm run start:clear -w @point/mobile-customer",
+    "db:validate": "npm run validate -w @point/database",
+    "db:generate": "npm run generate -w @point/database",
+    "db:migrate": "npm run migrate -w @point/database",
+    "db:migrate:deploy": "npm run migrate:deploy -w @point/database",
+    "db:push": "npm run push -w @point/database",
+    "db:studio": "npm run studio -w @point/database",
+    "db:seed": "npm run seed -w @point/database",
+    "dev:infra": "docker compose up -d",
+    "deploy:build": "bash deploy/scripts/prod-build.sh",
+    "deploy:migrate": "bash deploy/scripts/prod-migrate.sh",
+    "deploy:up": "bash deploy/scripts/prod-up.sh",
+    "setup:local": "npm run sync:env && npm run dev:infra && npm run db:generate && npm run db:migrate:deploy && npm run db:seed",
+    "sync:env": "node scripts/sync-local-env.mjs",
+    "ensure:guest": "node scripts/ensure-guest-customer.mjs",
+    "dev": "npm run sync:env && npm run ports:free && concurrently -n api,admin,customer -c blue,cyan,magenta \"cross-env PORT=7199 npm run dev:api\" \"cross-env WEB_ADMIN_PORT=7200 NEXT_PUBLIC_API_URL=http://localhost:7199/v1 NEXT_PUBLIC_CUSTOMER_WEB_URL=http://localhost:7201 npm run dev:web-admin\" \"cross-env WEB_CUSTOMER_PORT=7201 NEXT_PUBLIC_API_URL=http://localhost:7199/v1 npm run dev:web-customer\"",
+    "dev:admin": "npm run sync:env && npm run ports:free && concurrently -n api,admin -c blue,cyan \"cross-env PORT=5001 npm run dev:api\" \"cross-env WEB_ADMIN_PORT=5050 NEXT_PUBLIC_API_URL=http://localhost:5001/v1 npm run dev:web-admin\"",
+    "dev:admin:alt": "npm run sync:env && npm run ports:free && concurrently -n api,admin -c blue,cyan \"cross-env PORT=6101 npm run dev:api\" \"cross-env WEB_ADMIN_PORT=6105 NEXT_PUBLIC_API_URL=http://localhost:6101/v1 npm run dev:web-admin\"",
+    "ports:free": "node scripts/free-dev-ports.mjs",
+    "clean:web-admin": "npm run clean -w @point/web-admin",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  }
+}

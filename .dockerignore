@@ -1,0 +1,16 @@
+node_modules
+.git
+.github
+**/.next
+**/dist
+**/.env
+**/.env.local
+**/.env.*.local
+apps/mobile-courier/.expo
+apps/mobile-courier/node_modules
+apps/mobile-customer/.expo
+apps/mobile-customer/node_modules
+.cursor
+terminals
+*.md
+!deploy/**/*.md

@@ -1,0 +1,2 @@
+# İBB kaynak GeoJSON (400+ KB); yeniden indirip `npm run geo:build-mahalle` ile JSON üretin
+prisma/data/muhtarlik_lokasyon.geojson

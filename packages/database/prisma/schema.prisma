@@ -1,0 +1,927 @@
+// Point — Prisma schema (PostgreSQL)
+// publicId prefixes: BM, KM, BK, EK | Order numbers: numeric unique (e.g. 1000001)
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Sequences & identity
+// ---------------------------------------------------------------------------
+
+enum PublicIdPrefix {
+  BM // Bireysel müşteri
+  KM // Kurumsal müşteri
+  BK // Bireysel kurye
+  EK // Esnaf kurye
+}
+
+model IdSequence {
+  prefix    PublicIdPrefix @id
+  nextValue Int            @default(1)
+
+  @@map("id_sequences")
+}
+
+model OrderNumberSequence {
+  id        Int @id @default(1)
+  nextValue Int @default(1000001)
+
+  @@map("order_number_sequence")
+}
+
+// ---------------------------------------------------------------------------
+// Auth & users
+// ---------------------------------------------------------------------------
+
+enum UserStatus {
+  ACTIVE
+  PASSIVE
+  SUSPENDED
+  PENDING_APPROVAL
+  REJECTED
+}
+
+enum AppRole {
+  SYSTEM_ADMIN
+  GENERAL_MANAGER
+  OPERATIONS_MANAGER
+  OPERATIONS_SPECIALIST
+  ACCOUNTING_SPECIALIST
+  CUSTOMER
+  COURIER
+}
+
+model User {
+  id           String     @id @default(cuid())
+  phone        String     @unique
+  phoneVerifiedAt DateTime?
+  email        String?    @unique
+  passwordHash String?
+  status       UserStatus @default(PENDING_APPROVAL)
+  lastLoginAt  DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  tcKimlikNo   String?    @unique
+  birthDate    DateTime?  @db.Date
+  firstName    String?
+  lastName     String?
+
+  roles               UserRole[]
+  refreshTokens       RefreshToken[]
+  deviceSessions      DeviceSession[]
+  auditLogs           AuditLog[]      @relation("AuditActor")
+  notifications       Notification[]
+  passwordResetTokens PasswordResetToken[]
+  smsOtps             SmsOtp[]
+
+  customerProfile CustomerProfile?
+  courierProfile  CourierProfile?
+  staffProfile      StaffProfile?
+
+  courierReviews         CourierProfile[]            @relation("CourierReviewedBy")
+  courierDocumentReviews CourierDocumentSubmission[] @relation("CourierDocumentReviewedBy")
+  uploadedDeliveryCustomerInvoices DeliveryCustomerInvoice[] @relation("DeliveryCustomerInvoiceUploadedBy")
+
+  addresses Address[]
+
+  @@index([status])
+  @@map("users")
+}
+
+model RefreshToken {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jti        String    @unique
+  hashedToken String
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  ip         String?
+  userAgent  String?
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model DeviceSession {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deviceId   String
+  platform   String?
+  pushToken  String?
+  lastIp     String?
+  lastSeenAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, deviceId])
+  @@map("device_sessions")
+}
+
+model PasswordResetToken {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash   String
+  expiresAt  DateTime
+  consumedAt DateTime?
+  attempts   Int       @default(0)
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+
+model SmsOtp {
+  id         String    @id @default(cuid())
+  userId     String?
+  user       User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  phone      String
+  purpose    SmsOtpPurpose
+  codeHash   String
+  expiresAt  DateTime
+  consumedAt DateTime?
+  attempts   Int       @default(0)
+  createdAt  DateTime  @default(now())
+
+  @@index([phone, purpose])
+  @@map("sms_otps")
+}
+
+enum SmsOtpPurpose {
+  SIGNUP
+  LOGIN
+  PHONE_CHANGE
+  PASSWORD_RESET
+}
+
+// ---------------------------------------------------------------------------
+// RBAC
+// ---------------------------------------------------------------------------
+
+model Role {
+  id          String           @id @default(cuid())
+  slug        String           @unique // e.g. system_admin
+  name        String
+  description String?
+  builtIn     Boolean          @default(false)
+  permissions RolePermission[]
+  userRoles   UserRole[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String           @id @default(cuid())
+  slug        String           @unique // e.g. deliveries.read
+  description String?
+  roles       RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model UserRole {
+  userId String
+  roleId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@map("user_roles")
+}
+
+model StaffProfile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  appRole   AppRole
+  createdAt DateTime @default(now())
+
+  @@map("staff_profiles")
+}
+
+// ---------------------------------------------------------------------------
+// Customers & couriers
+// ---------------------------------------------------------------------------
+
+enum CustomerType {
+  INDIVIDUAL
+  CORPORATE
+  /// Şahıs işletmesi — yalnızca T.C. Kimlik numarası (bireysel ile aynı kimlik kuralı, farklı müşteri tipi)
+  SOLE_PROPRIETOR
+}
+
+model CustomerProfile {
+  id        String       @id @default(cuid())
+  userId    String       @unique
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      CustomerType
+  publicId  String       @unique // BM000001 / KM000001
+  companyName String?
+  taxNumber   String? @unique
+  taxOffice       String? @db.VarChar(120)
+  billingAddress  String? @db.VarChar(500)
+
+  invoiceAccountEnabled Boolean @default(false) // admin enables "cari"
+  walletBalance         Decimal @default(0) @db.Decimal(14, 2)
+
+  balanceHistories BalanceHistory[]
+  deliveries       Delivery[]
+  deliveryCustomerInvoices DeliveryCustomerInvoice[]
+  savedAddresses   CustomerSavedAddress[]
+  consents         CustomerConsent[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([type])
+  @@map("customer_profiles")
+}
+
+enum CustomerConsentType {
+  REGISTRATION_TERMS
+  MARKETING_ELECTRONIC
+}
+
+model CustomerConsent {
+  id                String              @id @default(cuid())
+  customerProfileId String
+  customerProfile   CustomerProfile     @relation(fields: [customerProfileId], references: [id], onDelete: Cascade)
+  type              CustomerConsentType
+  granted           Boolean
+  recordedAt        DateTime            @default(now())
+  source            String              @default("mobile_signup")
+
+  @@index([customerProfileId, type, recordedAt])
+  @@map("customer_consents")
+}
+
+/// Müşterinin sık kullandığı adres defteri (teslimat oluştururken seçim)
+model CustomerSavedAddress {
+  id         String          @id @default(cuid())
+  customerId String
+  customer   CustomerProfile @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  title      String
+  /// Sokak, cadde, bina no (mahalle ilçe coğrafya tablosundan)
+  line1      String
+  city       String          @default("İstanbul")
+  lat        Float?
+  lng        Float?
+  sortOrder  Int             @default(0)
+  neighborhoodId String?
+  neighborhood   Neighborhood? @relation(fields: [neighborhoodId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([customerId, sortOrder])
+  @@index([neighborhoodId])
+  @@map("customer_saved_addresses")
+}
+
+enum CourierType {
+  INDIVIDUAL
+  MERCHANT
+}
+
+/// Kurye kayıt sonrası evrak / onay süreci
+enum CourierOnboardingStatus {
+  DOCUMENTS_REQUIRED
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+}
+
+enum CourierDocumentFieldKind {
+  FILE
+  TEXT
+}
+
+/// Tek bir evrak / metin alanının inceleme durumu
+enum CourierDocumentReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+/// Esnaf kurye — şirket yapısı (bireysel kuryede kullanılmaz)
+enum CourierMerchantCompanyType {
+  SOLE_PROPRIETORSHIP
+  JOINT_STOCK
+  LIMITED
+}
+
+model CourierProfile {
+  id        String      @id @default(cuid())
+  userId    String      @unique
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      CourierType
+  publicId  String      @unique // BK000001 / EK000001
+  vehicleType VehicleType
+  plate             String? @db.VarChar(16)
+  merchantCompanyType CourierMerchantCompanyType?
+  taxNumber           String? @unique
+  iban      String?     @db.VarChar(34)
+
+  /// Mobil: çevrimiçi iken havuz görür; varsayılan çevrimdışı
+  isOnline             Boolean                 @default(false)
+  onlineAt             DateTime?
+  offlineAt            DateTime?
+
+  onboardingStatus     CourierOnboardingStatus @default(DOCUMENTS_REQUIRED)
+  rejectionReason      String?                 @db.Text
+  submittedForReviewAt DateTime?
+  reviewedAt           DateTime?
+  reviewedByUserId     String?
+  reviewedBy           User?                   @relation("CourierReviewedBy", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+
+  wallet CourierWallet?
+
+  deliveries            Delivery[]                  @relation("CourierDeliveries")
+  payoutRequests        PayoutRequest[]
+  locationSnapshots     CourierLocationSnapshot[]
+  consents              CourierConsent[]
+  documentSubmissions   CourierDocumentSubmission[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([onboardingStatus, submittedForReviewAt])
+  @@index([isOnline])
+  @@map("courier_profiles")
+}
+
+/// Yönetim: bireysel / esnaf için talep edilecek alan veya dosya tanımı
+model CourierDocumentRequirement {
+  id          String                   @id @default(cuid())
+  courierType CourierType
+  kind        CourierDocumentFieldKind
+  label       String
+  hint        String?
+  required    Boolean                  @default(true)
+  sortOrder   Int                      @default(0)
+  active      Boolean                  @default(true)
+  createdAt   DateTime                 @default(now())
+  updatedAt   DateTime                 @updatedAt
+
+  submissions CourierDocumentSubmission[]
+
+  @@index([courierType, active, sortOrder])
+  @@map("courier_document_requirements")
+}
+
+model CourierDocumentSubmission {
+  id               String   @id @default(cuid())
+  courierProfileId String
+  requirementId    String
+  textValue        String?  @db.Text
+  fileUrl          String?
+  fileStorageKey   String?
+  reviewStatus     CourierDocumentReviewStatus @default(PENDING)
+  rejectionReason  String?                     @db.Text
+  reviewedAt       DateTime?
+  reviewedByUserId String?
+  reviewedBy       User?                       @relation("CourierDocumentReviewedBy", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+  uploadedAt       DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  courierProfile CourierProfile           @relation(fields: [courierProfileId], references: [id], onDelete: Cascade)
+  requirement    CourierDocumentRequirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+
+  @@unique([courierProfileId, requirementId])
+  @@index([courierProfileId, reviewStatus])
+  @@map("courier_document_submissions")
+}
+
+enum CourierConsentType {
+  REGISTRATION_TERMS
+  MARKETING_NOTIFICATIONS
+}
+
+model CourierConsent {
+  id               String             @id @default(cuid())
+  courierProfileId String
+  courierProfile   CourierProfile     @relation(fields: [courierProfileId], references: [id], onDelete: Cascade)
+  type             CourierConsentType
+  granted          Boolean
+  recordedAt       DateTime           @default(now())
+  source           String             @default("mobile_onboarding")
+
+  @@index([courierProfileId, type, recordedAt])
+  @@map("courier_consents")
+}
+
+enum VehicleType {
+  MOTORCYCLE
+  CAR
+}
+
+model CourierWallet {
+  id         String   @id @default(cuid())
+  courierId  String   @unique
+  courier    CourierProfile @relation(fields: [courierId], references: [id], onDelete: Cascade)
+  balance    Decimal  @default(0) @db.Decimal(14, 2)
+  pending    Decimal  @default(0) @db.Decimal(14, 2)
+  currency   String   @default("TRY")
+  updatedAt  DateTime @updatedAt
+
+  ledger WalletLedgerEntry[]
+
+  @@map("courier_wallets")
+}
+
+model WalletLedgerEntry {
+  id        String   @id @default(cuid())
+  walletId  String
+  wallet    CourierWallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  amount    Decimal  @db.Decimal(14, 2)
+  type      WalletLedgerType
+  refType   String?
+  refId     String?
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  @@index([walletId, createdAt])
+  @@map("wallet_ledger_entries")
+}
+
+enum WalletLedgerType {
+  DELIVERY_EARNING
+  COMMISSION_DEDUCTION
+  PAYOUT
+  ADJUSTMENT
+}
+
+model PayoutRequest {
+  id            String           @id @default(cuid())
+  courierId     String
+  courier       CourierProfile   @relation(fields: [courierId], references: [id], onDelete: Cascade)
+  amount        Decimal          @db.Decimal(14, 2)
+  status        PayoutStatus     @default(PENDING)
+  iban          String?
+  note          String?
+  invoiceFileId String?
+  invoiceFile   FileAsset?       @relation(fields: [invoiceFileId], references: [id], onDelete: Restrict)
+  paidAt        DateTime?
+  paidByUserId  String?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@index([courierId, status])
+  @@map("payout_requests")
+}
+
+enum PayoutStatus {
+  PENDING
+  APPROVED
+  PAID
+  REJECTED
+}
+
+// ---------------------------------------------------------------------------
+// Geography & pricing
+// ---------------------------------------------------------------------------
+
+model Region {
+  id        String   @id @default(cuid())
+  code      String   @unique // TR-34 coğrafya veya IST-PZxx fiyat bölgeleri
+  name      String
+  sortOrder Int      @default(0)
+  /// İstanbul (TR-34) altındaki ilçeler — müşteri adres coğrafyası
+  geographyDistricts District[] @relation("GeographyRegion")
+  /// Fiyat matrisi eksenine bağlı ilçeler (IST-PZ…)
+  pricingDistricts   District[] @relation("PricingRegion")
+
+  matrixFrom RegionPriceMatrix[] @relation("FromRegion")
+  matrixTo   RegionPriceMatrix[] @relation("ToRegion")
+
+  @@map("regions")
+}
+
+model District {
+  id        String   @id @default(cuid())
+  regionId  String
+  region    Region   @relation("GeographyRegion", fields: [regionId], references: [id], onDelete: Cascade)
+  /// Matris satır/sütunlarındaki fiyat bölgesi (genelde IST-PZ01…08)
+  pricingRegionId String
+  pricingRegion   Region   @relation("PricingRegion", fields: [pricingRegionId], references: [id], onDelete: Restrict)
+  name      String
+  active    Boolean  @default(true)
+  neighborhoods Neighborhood[]
+
+  @@unique([regionId, name])
+  @@index([regionId, active])
+  @@index([pricingRegionId])
+  @@map("districts")
+}
+
+model Neighborhood {
+  id         String   @id @default(cuid())
+  districtId String
+  district   District @relation(fields: [districtId], references: [id], onDelete: Cascade)
+  name       String
+  active     Boolean  @default(true)
+  extraFee   Decimal  @default(0) @db.Decimal(10, 2)
+
+  savedAddresses CustomerSavedAddress[]
+
+  @@unique([districtId, name])
+  @@index([districtId, active])
+  @@map("neighborhoods")
+}
+
+model RegionPriceMatrix {
+  id            String       @id @default(cuid())
+  fromRegionId  String
+  toRegionId    String
+  fromRegion    Region       @relation("FromRegion", fields: [fromRegionId], references: [id], onDelete: Cascade)
+  toRegion      Region       @relation("ToRegion", fields: [toRegionId], references: [id], onDelete: Cascade)
+  baseMotor     Decimal      @db.Decimal(10, 2)
+  baseCar       Decimal      @db.Decimal(10, 2)
+  perKgMotor    Decimal      @default(0) @db.Decimal(10, 4)
+  perKgCar      Decimal      @default(0) @db.Decimal(10, 4)
+  nightMultiplier Decimal    @default(1) @db.Decimal(6, 4)
+  surgeMultiplier Decimal    @default(1) @db.Decimal(6, 4)
+  effectiveFrom DateTime     @default(now())
+  effectiveTo   DateTime?
+
+  @@unique([fromRegionId, toRegionId, effectiveFrom])
+  @@index([fromRegionId, toRegionId])
+  @@map("region_price_matrices")
+}
+
+model PricingRule {
+  id          String   @id @default(cuid())
+  name        String
+  ruleType    String   // night_window, surge, campaign_discount, etc.
+  config      Json
+  active      Boolean  @default(true)
+  priority    Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("pricing_rules")
+}
+
+model Campaign {
+  id          String    @id @default(cuid())
+  name        String
+  code        String?   @unique
+  config      Json      // discount rules, eligible customer types, date range
+  active      Boolean   @default(true)
+  startsAt    DateTime?
+  endsAt      DateTime?
+  /// Aynı müşterinin bu kampanyayı kaç teslimatta kullanabileceği; null = sınırsız
+  maxUsesPerCustomer Int?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  deliveries Delivery[]
+
+  @@map("campaigns")
+}
+
+/// Tanıtım sitesinde yayınlanan kampanya / iş ortaklığı içerikleri (indirim kodu kampanyalarından ayrı).
+model MarketingCampaign {
+  id           String   @id @default(cuid())
+  slug         String   @unique
+  title        String
+  summary      String
+  contentHtml  String   @db.Text
+  partnerLabel String?
+  imageUrl     String?
+  startsAt     DateTime
+  endsAt       DateTime
+  published    Boolean  @default(true)
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([published, sortOrder, startsAt])
+  @@map("marketing_campaigns")
+}
+
+/// Tanıtım sitesi hizmet sayfaları (kart + detay hero metinleri admin tarafından).
+model MarketingService {
+  id              String   @id @default(cuid())
+  slug            String   @unique
+  title           String
+  summary         String
+  heroTitle       String
+  heroTitleAccent String?
+  heroDescription String
+  contentHtml     String   @db.Text
+  iconUrl         String?
+  published       Boolean  @default(true)
+  sortOrder       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([published, sortOrder])
+  @@map("marketing_services")
+}
+
+// ---------------------------------------------------------------------------
+// Addresses
+// ---------------------------------------------------------------------------
+
+model Address {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title          String?
+  line1          String
+  line2          String?
+  city           String   @default("İstanbul")
+  districtId     String?
+  neighborhoodId String?
+  lat            Float?
+  lng            Float?
+  isFavorite     Boolean  @default(false)
+  isDefault      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([userId])
+  @@map("addresses")
+}
+
+// ---------------------------------------------------------------------------
+// Deliveries
+// ---------------------------------------------------------------------------
+
+enum DeliveryType {
+  DOCUMENT
+  PACKAGE
+}
+
+enum DeliveryStatus {
+  PENDING
+  POOL
+  COURIER_ASSIGNED
+  COURIER_EN_ROUTE
+  PACKAGE_PICKED_UP
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CARD
+  WALLET
+  INVOICE_ACCOUNT
+}
+
+model Delivery {
+  id              String         @id @default(cuid())
+  orderNumber     Int            @unique
+  customerId      String
+  customer        CustomerProfile @relation(fields: [customerId], references: [id], onDelete: Restrict)
+
+  courierId       String?
+  courier         CourierProfile? @relation("CourierDeliveries", fields: [courierId], references: [id], onDelete: SetNull)
+
+  status          DeliveryStatus @default(PENDING)
+  type            DeliveryType
+  description     String?
+  weightKg        Decimal?       @db.Decimal(8, 2)
+  vehicleType     VehicleType
+  notes           String?
+
+  pickupAddress   Json           // structured address snapshot
+  dropoffAddress  Json
+
+  senderName      String
+  senderPhone     String
+  recipientName   String
+  recipientPhone  String
+
+  priceBreakdown  Json           // matrix + surcharges + discounts
+  totalPrice      Decimal        @db.Decimal(14, 2)
+  commissionRate  Decimal        @db.Decimal(5, 4) // e.g. 0.45
+  commissionAmount Decimal       @db.Decimal(14, 2)
+  courierEarning  Decimal        @db.Decimal(14, 2)
+
+  paymentMethod   PaymentMethod
+  paymentStatus   PaymentStatus  @default(PENDING)
+
+  campaignId      String?
+  campaign        Campaign?      @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+
+  assignedByStaffId String?      // manual assignment
+  cancelledReason String?
+
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  statusLogs      DeliveryStatusLog[]
+  transactions    Transaction[]
+  customerInvoiceLinks DeliveryCustomerInvoiceDelivery[]
+  locationSnapshots CourierLocationSnapshot[]
+
+  @@index([status, createdAt])
+  @@index([customerId])
+  @@index([courierId])
+  @@map("deliveries")
+}
+
+enum PaymentStatus {
+  PENDING
+  AUTHORIZED
+  CAPTURED
+  FAILED
+  REFUNDED
+}
+
+model DeliveryStatusLog {
+  id         String          @id @default(cuid())
+  deliveryId String
+  delivery   Delivery        @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  fromStatus DeliveryStatus?
+  toStatus   DeliveryStatus
+  actorType  String          // customer, courier, system, staff
+  actorId    String?
+  meta       Json?
+  createdAt  DateTime        @default(now())
+
+  @@index([deliveryId, createdAt])
+  @@map("delivery_status_logs")
+}
+
+model CourierLocationSnapshot {
+  id         String   @id @default(cuid())
+  deliveryId String
+  delivery   Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  courierId  String
+  courier    CourierProfile @relation(fields: [courierId], references: [id], onDelete: Cascade)
+  lat        Float
+  lng        Float
+  accuracyM  Float?
+  recordedAt DateTime @default(now())
+
+  @@index([deliveryId, recordedAt])
+  @@map("courier_location_snapshots")
+}
+
+// ---------------------------------------------------------------------------
+// Finance
+// ---------------------------------------------------------------------------
+
+model Transaction {
+  id          String            @id @default(cuid())
+  deliveryId  String?
+  delivery    Delivery?         @relation(fields: [deliveryId], references: [id], onDelete: SetNull)
+  customerId  String?
+  amount      Decimal           @db.Decimal(14, 2)
+  type        TransactionType
+  provider    String?           // paytr, iyzico, internal
+  providerRef String?
+  status      TransactionStatus @default(PENDING)
+  meta        Json?
+  createdAt   DateTime          @default(now())
+
+  @@index([deliveryId])
+  @@map("transactions")
+}
+
+enum TransactionType {
+  DELIVERY_CHARGE
+  WALLET_TOPUP
+  REFUND
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+/// Operasyonun müşteriye yüklediği sipariş faturaları (tek veya toplu).
+model DeliveryCustomerInvoice {
+  id               String   @id @default(cuid())
+  customerId       String
+  customer         CustomerProfile @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  fileId           String
+  file             FileAsset @relation(fields: [fileId], references: [id], onDelete: Restrict)
+  uploadedByUserId String?
+  uploadedBy       User?    @relation("DeliveryCustomerInvoiceUploadedBy", fields: [uploadedByUserId], references: [id], onDelete: SetNull)
+  invoiceNumber    String?  @db.VarChar(64)
+  note             String?  @db.VarChar(500)
+  createdAt        DateTime @default(now())
+
+  deliveries DeliveryCustomerInvoiceDelivery[]
+
+  @@index([customerId, createdAt])
+  @@map("delivery_customer_invoices")
+}
+
+model DeliveryCustomerInvoiceDelivery {
+  invoiceId  String
+  deliveryId String
+  invoice    DeliveryCustomerInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  delivery   Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+
+  @@id([invoiceId, deliveryId])
+  @@index([deliveryId])
+  @@map("delivery_customer_invoice_deliveries")
+}
+
+model BalanceHistory {
+  id                String            @id @default(cuid())
+  customerProfileId String
+  customerProfile   CustomerProfile   @relation(fields: [customerProfileId], references: [id], onDelete: Cascade)
+  amount            Decimal           @db.Decimal(14, 2)
+  reason            String
+  refType           String?
+  refId             String?
+  createdAt         DateTime          @default(now())
+
+  @@index([customerProfileId, createdAt])
+  @@map("balance_histories")
+}
+
+// ---------------------------------------------------------------------------
+// Notifications & system
+// ---------------------------------------------------------------------------
+
+enum NotificationChannel {
+  PUSH
+  SMS
+  IN_APP
+}
+
+model Notification {
+  id        String               @id @default(cuid())
+  userId    String
+  user      User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  channel   NotificationChannel
+  title     String
+  body      String
+  data      Json?
+  readAt    DateTime?
+  createdAt DateTime             @default(now())
+
+  @@index([userId, createdAt])
+  @@map("notifications")
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorUserId String?
+  actor      User?    @relation("AuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  action     String
+  resource   String
+  resourceId String?
+  ip         String?
+  userAgent  String?
+  diff       Json?
+  createdAt  DateTime @default(now())
+
+  @@index([resource, resourceId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model SystemSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json
+  updatedAt DateTime @updatedAt
+  updatedByUserId String?
+
+  @@map("system_settings")
+}
+
+model FileAsset {
+  id             String          @id @default(cuid())
+  ownerType      String          // courier, system, payout_request
+  ownerId        String?
+  kind           String          // courier_doc, logo, payout_invoice
+  path           String
+  mime           String?
+  size           Int?
+  createdAt      DateTime        @default(now())
+  payoutRequests PayoutRequest[]
+  deliveryCustomerInvoices DeliveryCustomerInvoice[]
+
+  @@index([ownerType, ownerId])
+  @@map("file_assets")
+}
