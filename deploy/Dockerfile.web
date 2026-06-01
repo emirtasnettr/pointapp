@@ -13,8 +13,7 @@ ENV NEXT_PUBLIC_MARKETING_WEB_URL=$NEXT_PUBLIC_MARKETING_WEB_URL
 COPY package.json package-lock.json ./
 COPY apps ./apps
 COPY packages ./packages
-RUN npm ci \
-  && find packages -type d -name node_modules -exec rm -rf {} + 2>/dev/null || true
+RUN npm ci
 RUN npm run build -w @point/${APP}
 
 FROM node:20-bookworm-slim AS run

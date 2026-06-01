@@ -1,8 +1,11 @@
-# Üretim / staging stack — monorepo kökünden:
-#   cp deploy/env.example deploy/.env   # düzenleyin
-#   docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env build
-#   docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env run --rm migrate
-#   docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env up -d
+# Üretim / staging stack — monorepo kökünden çalıştırın (/opt/point):
+#   cp deploy/env.example deploy/.env
+#   ./deploy/scripts/prod-build.sh
+#   ./deploy/scripts/prod-migrate.sh
+#   ./deploy/scripts/prod-up.sh
+#
+# Manuel: docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env ...
+# (Komutları deploy/ içinden değil, repo kökünden verin.)
 
 name: point-prod
 
@@ -35,7 +38,7 @@ services:
     build:
       context: ..
       dockerfile: deploy/Dockerfile.migrate
-    env_file: deploy/.env
+    env_file: .env
     depends_on:
       postgres:
         condition: service_healthy
@@ -47,7 +50,7 @@ services:
       context: ..
       dockerfile: deploy/Dockerfile.api
     restart: unless-stopped
-    env_file: deploy/.env
+    env_file: .env
     volumes:
       - point_api_storage:/app/storage
     depends_on:
@@ -89,7 +92,7 @@ services:
     ports:
       - '80:80'
       - '443:443'
-    env_file: deploy/.env
+    env_file: .env
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
