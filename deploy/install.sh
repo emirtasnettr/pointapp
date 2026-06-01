@@ -142,7 +142,7 @@ ensure_env_file() {
   echo ""
   point_info "Domain özeti:"
   echo "    API:      https://${API_DOMAIN}"
-  echo "    Tanıtım:  https://${ADMIN_DOMAIN}"
+  echo "    Tanıtım:  https://${ADMIN_DOMAINS//,/, https://}"
   echo "    Müşteri:  https://${CUSTOMER_DOMAIN}"
   echo "    TLS:      ${CADDY_EMAIL}"
   echo ""
@@ -153,7 +153,7 @@ ensure_env_file() {
   fi
 
   write_deploy_env "$env_file" "$POSTGRES_PASSWORD" "$JWT_SECRET" \
-    "$API_DOMAIN" "$ADMIN_DOMAIN" "$CUSTOMER_DOMAIN" "$CADDY_EMAIL"
+    "$API_DOMAIN" "$ADMIN_DOMAINS" "$ADMIN_DOMAIN" "$CUSTOMER_DOMAIN" "$CADDY_EMAIL"
 }
 
 run_build() {
@@ -230,7 +230,7 @@ print_summary() {
   echo -e "${C_GREEN}${C_BOLD}║  Point kurulumu tamamlandı                                   ║${C_RESET}"
   echo -e "${C_GREEN}${C_BOLD}╚══════════════════════════════════════════════════════════════╝${C_RESET}"
   echo ""
-  echo -e "  ${C_BOLD}Tanıtım + yönetim:${C_RESET}  https://${ADMIN_DOMAIN}"
+  echo -e "  ${C_BOLD}Tanıtım + yönetim:${C_RESET}  https://${ADMIN_DOMAINS//,/, https://}"
   echo -e "  ${C_BOLD}Müşteri paneli:${C_RESET}     https://${CUSTOMER_DOMAIN}"
   echo -e "  ${C_BOLD}API:${C_RESET}                https://${API_DOMAIN}/v1/health"
   echo ""

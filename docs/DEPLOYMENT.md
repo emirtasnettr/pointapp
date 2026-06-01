@@ -12,7 +12,7 @@ curl -fsSL https://raw.githubusercontent.com/emirtasnettr/pointapp/main/deploy/b
 
 Sihirbaz interaktif olarak domain, TLS e-postası sorar; secret’ları üretir; build + migrate + servisleri başlatır.
 
-**Önce DNS:** Ana domain için `api`, `www`, `app` A kayıtları sunucu IP’sine yönlenmeli (TLS için).
+**Önce DNS:** Ana domain için `api`, `www`, `app` ve **kök** (`pointkurye.net.tr`) A kayıtları sunucu IP’sine yönlenmeli (TLS için).
 
 | Seçenek | Açıklama |
 |---------|----------|
@@ -20,6 +20,8 @@ Sihirbaz interaktif olarak domain, TLS e-postası sorar; secret’ları üretir;
 | `sudo bash deploy/install.sh --upgrade` | `git pull` + yeniden build |
 | `sudo bash deploy/install.sh --seed` | Demo verisi (staging) |
 | `sudo bash deploy/install.sh --help` | Tüm seçenekler |
+
+Tanıtım + yönetim: **`https://pointkurye.net.tr`** ve **`https://www.pointkurye.net.tr`** (aynı site).
 
 **Non-interactive** (otomasyon):
 
@@ -49,7 +51,7 @@ Sihirbaz kullanmak istemezseniz aşağıdaki adımlar geçerlidir.
 | Domain (örnek) | Konteyner | Açıklama |
 |----------------|-----------|----------|
 | `api.pointkurye.net.tr` | `api:5001` | NestJS `/v1` |
-| `www.pointkurye.net.tr` | `web-admin:3000` | Tanıtım + yönetim paneli |
+| `pointkurye.net.tr` + `www.pointkurye.net.tr` | `web-admin:3000` | Tanıtım + yönetim paneli |
 | `app.pointkurye.net.tr` | `web-customer:3000` | Müşteri portalı |
 
 ## 1. Sunucu hazırlığı

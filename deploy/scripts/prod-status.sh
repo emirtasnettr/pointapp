@@ -29,5 +29,5 @@ fi
 echo ""
 echo "Domainler (deploy/.env):"
 echo "  API:      ${API_DOMAIN:-—}"
-echo "  Tanıtım:  ${ADMIN_DOMAIN:-—}"
+echo "  Tanıtım:  ${ADMIN_DOMAINS:-${ADMIN_DOMAIN:-—}}"
 echo "  Müşteri:  ${CUSTOMER_DOMAIN:-—}"

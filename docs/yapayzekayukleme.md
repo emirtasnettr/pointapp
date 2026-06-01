@@ -12,10 +12,11 @@ DNS’te her biri için **A kaydı** → VPS IP:
 | Host | Servis |
 |------|--------|
 | `api.pointkurye.net.tr` | API |
-| `www.pointkurye.net.tr` | Tanıtım + yönetim (`web-admin`) |
+| `pointkurye.net.tr` | Tanıtım + yönetim (`web-admin`, köknokta) |
+| `www.pointkurye.net.tr` | Tanıtım + yönetim (`web-admin`, www) |
 | `app.pointkurye.net.tr` | Müşteri portalı (`web-customer`) |
 
-Kök `pointkurye.net.tr` isteğe bağlı (www’ye yönlendirme ayrı ayarlanır). `deploy/env.example` bu hostlarla hazırlanmıştır.
+Kök ve www **aynı site**; kurulum sihirbazı ikisini de otomatik yapılandırır (`ADMIN_DOMAINS`).
 
 ---
 
