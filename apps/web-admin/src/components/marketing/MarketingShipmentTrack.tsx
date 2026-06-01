@@ -173,7 +173,7 @@ export function MarketingShipmentTrack() {
       setOtpSent(true);
       if (res.simulatedOtp) setDevOtpHint(res.simulatedOtp);
     } catch (message) {
-      setErr(message instanceof Error ? message : 'SMS gönderilemedi.');
+      setErr(message instanceof Error ? message.message : 'SMS gönderilemedi.');
       setOtpSent(false);
     } finally {
       setPending(false);
@@ -193,7 +193,7 @@ export function MarketingShipmentTrack() {
       setItems(data.items);
       setSearched(true);
     } catch (message) {
-      setErr(message instanceof Error ? message : 'Sorgu yapılamadı.');
+      setErr(message instanceof Error ? message.message : 'Sorgu yapılamadı.');
       setItems([]);
       setSearched(false);
     } finally {

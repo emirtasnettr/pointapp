@@ -68,6 +68,22 @@ else
   say_fail "API build"
 fi
 
+echo "==> web-customer build (Next.js — prod Docker adımı)"
+if npm run build -w @point/web-customer >/tmp/point-web-customer-build.log 2>&1; then
+  say_ok "npm run build -w @point/web-customer"
+else
+  say_fail "web-customer build"
+  tail -30 /tmp/point-web-customer-build.log >&2
+fi
+
+echo "==> web-admin build"
+if npm run build -w @point/web-admin >/tmp/point-web-admin-build.log 2>&1; then
+  say_ok "npm run build -w @point/web-admin"
+else
+  say_fail "web-admin build"
+  tail -30 /tmp/point-web-admin-build.log >&2
+fi
+
 if [[ "$FAIL" -ne 0 ]]; then
   echo ""
   echo "Doğrulama BAŞARISIZ"
