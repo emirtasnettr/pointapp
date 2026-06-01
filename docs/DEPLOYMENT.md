@@ -14,9 +14,9 @@ Bu rehber, monorepo’yu tek VPS üzerinde **Docker Compose + Caddy (HTTPS)** il
 
 | Domain (örnek) | Konteyner | Açıklama |
 |----------------|-----------|----------|
-| `api.ornek.com` | `api:5001` | NestJS `/v1` |
-| `panel.ornek.com` | `web-admin:3000` | Tanıtım + yönetim paneli |
-| `app.ornek.com` | `web-customer:3000` | Müşteri portalı |
+| `api.pointkurye.net.tr` | `api:5001` | NestJS `/v1` |
+| `www.pointkurye.net.tr` | `web-admin:3000` | Tanıtım + yönetim paneli |
+| `app.pointkurye.net.tr` | `web-customer:3000` | Müşteri portalı |
 
 ## 1. Sunucu hazırlığı
 
@@ -88,10 +88,10 @@ docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env run --rm
 ## 5. Doğrulama
 
 ```bash
-curl -sS "https://api.ornek.com/v1/health"
+curl -sS "https://api.pointkurye.net.tr/v1/health"
 ```
 
-Tarayıcıda panel ve müşteri giriş sayfalarını açın. Mobil uygulamalarda API URL’ini `https://api.ornek.com/v1` yapın.
+Tarayıcıda `https://www.pointkurye.net.tr` ve `https://app.pointkurye.net.tr` açın. Mobil uygulamalarda API URL: `https://api.pointkurye.net.tr/v1`.
 
 ## 6. Güncelleme (yeni sürüm)
 
@@ -137,5 +137,6 @@ Aynı env değişkenleriyle: `npm ci`, `npm run db:migrate:deploy`, `npm run bui
 
 ## İlgili
 
+- **Yapay zeka / VPS operatörü:** [yapayzekayukleme.md](./yapayzekayukleme.md) — parçalı rehber (`docs/yapayzekayukleme/01` … `06`, `pk1haziran` klasörü)
 - Mimari: [ARCHITECTURE.md](./ARCHITECTURE.md)
 - Lokal geliştirme: kök `package.json` → `npm run setup:local`, `npm run dev`

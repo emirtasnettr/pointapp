@@ -8,7 +8,8 @@ coverage
 .env
 .env.*
 !.env.example
-deploy/.env
+# Geçici: deploy/.env GitHub’a yüklenecek — silindikten sonra satırı kaldır: !deploy/.env
+!deploy/.env
 .DS_Store
 apps/api/storage
 uploads
