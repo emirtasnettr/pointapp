@@ -16,6 +16,7 @@ import {
 import * as bcrypt from 'bcryptjs';
 import { isValidTCKimlikNo, isValidTurkishVKN } from '../../common/turkish-identifiers';
 import { PrismaService } from '../../prisma/prisma.service';
+import { assertOtpAttemptsNotExceeded, smsSimulationPayload } from './sms-otp.util';
 import { recordCustomerConsents } from './customer-consent.util';
 import type { CustomerRegisterSendSmsDto } from './dto/customer-register-send-sms.dto';
 import type { CustomerRegisterDto } from './dto/customer-register.dto';
@@ -136,18 +137,11 @@ export class CustomerRegisterService {
       },
     });
 
-    const sim = this.smsSimulationEnabled();
     return {
       ok: true as const,
       expiresAt: expiresAt.toISOString(),
       phone,
-      ...(sim
-        ? {
-            simulatedOtp: code,
-            simulationNotice:
-              'SMS simülasyonu etkin: Gerçek ortamda kod telefona gider; şimdilik ekranda gösterilir.',
-          }
-        : {}),
+      ...smsSimulationPayload(this.config, code),
     };
   }
 
@@ -177,6 +171,8 @@ export class CustomerRegisterService {
     if (!otp) {
       throw new BadRequestException('Önce telefonunuza SMS kodu gönderin veya süre dolmuş olabilir');
     }
+
+    assertOtpAttemptsNotExceeded(otp.attempts);
 
     const codeOk = await bcrypt.compare(dto.smsCode, otp.codeHash);
     if (!codeOk) {

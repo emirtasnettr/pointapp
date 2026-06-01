@@ -83,9 +83,10 @@ export default function LegalPageScreen() {
   return (
     <View style={styles.root}>
       <WebView
-        originWhitelist={['*']}
-        source={{ html }}
+        originWhitelist={['about:blank']}
+        source={{ html, baseUrl: 'about:blank' }}
         style={styles.web}
+        javaScriptEnabled={false}
         showsVerticalScrollIndicator
       />
     </View>

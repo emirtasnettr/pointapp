@@ -1,6 +1,40 @@
 # Point — VPS / Docker ile canlıya alma
 
-Bu rehber, monorepo’yu tek VPS üzerinde **Docker Compose + Caddy (HTTPS)** ile çalıştırmak içindir. Staging ve erken production testleri için uygundur.
+Bu rehber, monorepo’yu tek VPS üzerinde **Docker Compose + Caddy (HTTPS)** ile çalıştırmak içindir.
+
+## Hızlı kurulum (sihirbaz — önerilen)
+
+Root SSH erişiminiz varsa en kolay yol:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/emirtasnettr/pointapp/main/deploy/bootstrap.sh | sudo bash
+```
+
+Sihirbaz interaktif olarak domain, TLS e-postası sorar; secret’ları üretir; build + migrate + servisleri başlatır.
+
+**Önce DNS:** Ana domain için `api`, `www`, `app` A kayıtları sunucu IP’sine yönlenmeli (TLS için).
+
+| Seçenek | Açıklama |
+|---------|----------|
+| `sudo bash deploy/install.sh` | Repo içinden kurulum |
+| `sudo bash deploy/install.sh --upgrade` | `git pull` + yeniden build |
+| `sudo bash deploy/install.sh --seed` | Demo verisi (staging) |
+| `sudo bash deploy/install.sh --help` | Tüm seçenekler |
+
+**Non-interactive** (otomasyon):
+
+```bash
+export POINT_INSTALL_NONINTERACTIVE=1
+export POINT_BASE_DOMAIN=pointkurye.net.tr
+export POINT_CADDY_EMAIL=admin@pointkurye.net.tr
+sudo bash deploy/install.sh
+```
+
+---
+
+## Manuel kurulum
+
+Sihirbaz kullanmak istemezseniz aşağıdaki adımlar geçerlidir.
 
 ## Önkoşullar
 
@@ -107,6 +141,9 @@ git pull
 
 ```
 deploy/
+  install.sh           # Kurulum sihirbazı
+  bootstrap.sh         # Tek satır VPS girişi
+  lib/                 # common, preflight, write-env
   docker-compose.prod.yml
   Dockerfile.api
   Dockerfile.web
@@ -117,6 +154,8 @@ deploy/
     prod-build.sh
     prod-migrate.sh
     prod-up.sh
+    prod-status.sh
+    prod-logs.sh
 ```
 
 Kalıcı veriler: Docker volume `point_pg_data`, `point_api_storage` (yüklenen dosyalar).
@@ -137,6 +176,6 @@ Aynı env değişkenleriyle: `npm ci`, `npm run db:migrate:deploy`, `npm run bui
 
 ## İlgili
 
-- **Yapay zeka / VPS operatörü:** [yapayzekayukleme.md](./yapayzekayukleme.md) — parçalı rehber (`docs/yapayzekayukleme/01` … `06`, `pk1haziran` klasörü)
+- **Yapay zeka / VPS operatörü:** [yapayzekayukleme.md](./yapayzekayukleme.md) — parçalı rehber (`docs/yapayzekayukleme/01` … `06`, `/opt/point` klasörü)
 - Mimari: [ARCHITECTURE.md](./ARCHITECTURE.md)
 - Lokal geliştirme: kök `package.json` → `npm run setup:local`, `npm run dev`

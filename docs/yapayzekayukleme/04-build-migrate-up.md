@@ -3,7 +3,7 @@
 **Görev (yapay zeka):** `POINT_ROOT` içinde sırayla build → migrate → up. Her adımın exit code 0 olmalı.
 
 ```bash
-export POINT_ROOT=/opt/pk1haziran   # Parça 3’teki gerçek yol
+export POINT_ROOT=/opt/point   # Parça 3’teki gerçek yol
 cd "$POINT_ROOT"
 ```
 

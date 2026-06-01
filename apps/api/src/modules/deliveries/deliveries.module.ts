@@ -16,6 +16,7 @@ import { DeliveriesController } from './deliveries.controller';
 import { DeliveriesService } from './deliveries.service';
 import { DeliveryPricingService } from './delivery-pricing.service';
 import { PublicDeliveriesController } from './public-deliveries.controller';
+import { PublicDeliveryTrackService } from './public-delivery-track.service';
 
 @Module({
   imports: [AuthModule, CourierModule, FilesModule, SettingsModule],
@@ -35,6 +36,7 @@ import { PublicDeliveriesController } from './public-deliveries.controller';
     DeliveryCustomerInvoiceService,
     CustomerSavedAddressesService,
     CustomerNotificationService,
+    PublicDeliveryTrackService,
   ],
   exports: [DeliveriesService, DeliveryPricingService],
 })

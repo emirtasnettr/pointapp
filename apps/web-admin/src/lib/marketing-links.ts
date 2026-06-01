@@ -29,13 +29,10 @@ export function courierRegisterPath(): string {
   return '/surucu/kayit';
 }
 
-/**
- * Giriş/kayıt 6790’da yapılır; panel token’ı 6791 localStorage’a hash ile aktarılır.
- */
-export function customerPanelHandoffUrl(accessToken: string, next?: string | null): string {
+/** Tek kullanımlık handoff kodu ile müşteri paneline yönlendirme (JWT URL’de taşınmaz). */
+export function customerPanelHandoffUrl(handoffCode: string, next?: string | null): string {
   const params = new URLSearchParams();
+  params.set('code', handoffCode);
   params.set('next', safeInternalPath(next ?? null, '/panel'));
-  const qs = params.toString();
-  const hash = `access_token=${encodeURIComponent(accessToken)}`;
-  return `${customerWebPath('/auth/handoff')}?${qs}#${hash}`;
+  return `${customerWebPath('/auth/handoff')}?${params.toString()}`;
 }

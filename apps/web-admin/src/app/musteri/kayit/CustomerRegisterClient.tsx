@@ -17,7 +17,7 @@ import {
 } from '@/components/customer/auth-ui';
 import { LegalDocumentModal } from '@/components/customer/LegalDocumentModal';
 import { cn } from '@/lib/cn';
-import { customerPanelHandoffUrl } from '@/lib/marketing-links';
+import { redirectToCustomerPanelWithHandoff } from '@/lib/customer-handoff';
 import { publicApiPost } from '@/lib/public-api';
 import { REGISTRATION_LEGAL_LINKS } from '@/lib/register-consents';
 import { isValidTCKimlikNo, isValidTurkishVKN } from '@/lib/tr-identifiers';
@@ -257,7 +257,7 @@ export function CustomerRegisterClient() {
       }
 
       const res = await publicApiPost<RegisterRes>('/auth/customer/register', body);
-      window.location.assign(customerPanelHandoffUrl(res.accessToken, nextFromUrl()));
+      await redirectToCustomerPanelWithHandoff(res.accessToken, nextFromUrl());
     } catch (e) {
       setErr((e as Error).message);
     } finally {

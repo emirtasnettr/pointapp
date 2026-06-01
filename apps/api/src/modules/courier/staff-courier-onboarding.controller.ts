@@ -12,6 +12,9 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AuthGuard } from '@nestjs/passport';
+import { RequirePermissions } from '../auth/rbac/require-permissions.decorator';
+import { StaffPermissionsGuard } from '../auth/rbac/staff-permissions.guard';
+import { StaffPerm } from '../auth/rbac/staff-permissions';
 import { CourierType } from '@prisma/client';
 import type { Request } from 'express';
 import type { StaffJwtUser } from '../auth/strategies/staff-jwt.strategy';
@@ -24,7 +27,8 @@ import {
 import { StaffCourierOnboardingService } from './staff-courier-onboarding.service';
 
 @Controller('staff/courier')
-@UseGuards(AuthGuard('staff-jwt'))
+@UseGuards(AuthGuard('staff-jwt'), StaffPermissionsGuard)
+@RequirePermissions(StaffPerm.DELIVERIES_READ)
 export class StaffCourierOnboardingController {
   constructor(
     private readonly staffOnboarding: StaffCourierOnboardingService,
@@ -52,11 +56,13 @@ export class StaffCourierOnboardingController {
   }
 
   @Post('document-requirements')
+  @RequirePermissions(StaffPerm.DELIVERIES_WRITE)
   createRequirement(@Body() body: UpsertCourierDocumentRequirementDto) {
     return this.staffOnboarding.createRequirement(body);
   }
 
   @Patch('document-requirements/:id')
+  @RequirePermissions(StaffPerm.DELIVERIES_WRITE)
   patchRequirement(@Param('id') id: string, @Body() body: PatchCourierDocumentRequirementDto) {
     return this.staffOnboarding.patchRequirement(id.trim(), body);
   }
@@ -77,6 +83,7 @@ export class StaffCourierOnboardingController {
   }
 
   @Post('applications/:publicId/requirements/:requirementId/approve')
+  @RequirePermissions(StaffPerm.DELIVERIES_WRITE)
   approveDocument(
     @Req() req: Request & { user: StaffJwtUser },
     @Param('publicId') publicId: string,
@@ -86,6 +93,7 @@ export class StaffCourierOnboardingController {
   }
 
   @Post('applications/:publicId/requirements/:requirementId/reject')
+  @RequirePermissions(StaffPerm.DELIVERIES_WRITE)
   rejectDocument(
     @Req() req: Request & { user: StaffJwtUser },
     @Param('publicId') publicId: string,
@@ -101,11 +109,13 @@ export class StaffCourierOnboardingController {
   }
 
   @Post('applications/:publicId/request-revisions')
+  @RequirePermissions(StaffPerm.DELIVERIES_WRITE)
   requestRevisions(@Param('publicId') publicId: string) {
     return this.staffOnboarding.requestRevisions(publicId.trim());
   }
 
   @Post('applications/:publicId/approve')
+  @RequirePermissions(StaffPerm.DELIVERIES_WRITE)
   approveAccount(@Req() req: Request & { user: StaffJwtUser }, @Param('publicId') publicId: string) {
     return this.staffOnboarding.approve(req.user.userId, publicId.trim());
   }

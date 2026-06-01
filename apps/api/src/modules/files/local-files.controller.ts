@@ -1,6 +1,7 @@
-import { Controller, Get, NotFoundException, Param, StreamableFile } from '@nestjs/common';
+import { Controller, Get, Headers, NotFoundException, Param, StreamableFile } from '@nestjs/common';
 import { createReadStream, existsSync } from 'node:fs';
 import { LocalStorageAdapter } from '../../providers/storage/local-storage.adapter';
+import { LocalFilesAccessService } from './local-files-access.service';
 
 function mimeFromName(fileName: string): string {
   const lower = fileName.toLowerCase();
@@ -11,13 +12,18 @@ function mimeFromName(fileName: string): string {
   return 'application/octet-stream';
 }
 
-/** Kimlik doğrulamasız: yalnızca yükleme dizinindeki nesneler (logo vb.). */
 @Controller('files')
 export class LocalFilesController {
-  constructor(private readonly storage: LocalStorageAdapter) {}
+  constructor(
+    private readonly storage: LocalStorageAdapter,
+    private readonly access: LocalFilesAccessService,
+  ) {}
 
   @Get('local/:key')
-  getLocal(@Param('key') key: string): StreamableFile {
+  async getLocal(
+    @Param('key') key: string,
+    @Headers('authorization') authorization?: string,
+  ): Promise<StreamableFile> {
     let decoded: string;
     try {
       decoded = decodeURIComponent(key);
@@ -27,6 +33,9 @@ export class LocalFilesController {
     if (decoded.includes('..')) {
       throw new NotFoundException();
     }
+
+    await this.access.assertMayReadLocalKey(decoded, authorization);
+
     let full: string;
     try {
       full = this.storage.resolveSafePath(decoded);

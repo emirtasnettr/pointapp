@@ -1,5 +1,8 @@
 import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { RequirePermissions } from '../auth/rbac/require-permissions.decorator';
+import { StaffPermissionsGuard } from '../auth/rbac/staff-permissions.guard';
+import { StaffPerm } from '../auth/rbac/staff-permissions';
 import type { Request } from 'express';
 import type { StaffJwtUser } from '../auth/strategies/staff-jwt.strategy';
 import { SetCourierUserStatusDto } from '../courier/dto/set-courier-user-status.dto';
@@ -10,7 +13,8 @@ import { UpdateStaffUserDto } from './dto/update-staff-user.dto';
 import { StaffUsersService } from './staff-users.service';
 
 @Controller('staff/users')
-@UseGuards(AuthGuard('staff-jwt'))
+@UseGuards(AuthGuard('staff-jwt'), StaffPermissionsGuard)
+@RequirePermissions(StaffPerm.USERS_MANAGE)
 export class StaffUsersController {
   constructor(private readonly staffUsers: StaffUsersService) {}
 

@@ -18,6 +18,10 @@ import {
 import * as bcrypt from 'bcryptjs';
 import { isValidTCKimlikNo, isValidTurkishVKN } from '../../common/turkish-identifiers';
 import { isValidTurkishPlate, normalizeTurkishPlate } from '../../common/turkish-plate';
+import {
+  assertOtpAttemptsNotExceeded,
+  smsSimulationPayload,
+} from './sms-otp.util';
 import { PrismaService } from '../../prisma/prisma.service';
 import { recordCourierConsents } from './courier-consent.util';
 import type { CourierRegisterSendSmsDto } from './dto/courier-register-send-sms.dto';
@@ -77,10 +81,6 @@ export class CourierRegisterService {
     if (s.startsWith('0') && /^05\d{9}$/.test(s)) return `+9${s.slice(1)}`;
     if (/^5\d{9}$/.test(s)) return `+90${s}`;
     throw new BadRequestException('Geçersiz telefon numarası');
-  }
-
-  private smsSimulationEnabled(): boolean {
-    return this.config.get<string>('POINT_SMS_SIMULATION', '1') !== '0';
   }
 
   private validateRegistrationPayload(dto: CourierRegisterDto) {
@@ -187,18 +187,11 @@ export class CourierRegisterService {
       },
     });
 
-    const sim = this.smsSimulationEnabled();
     return {
       ok: true as const,
       expiresAt: expiresAt.toISOString(),
       phone,
-      ...(sim
-        ? {
-            simulatedOtp: code,
-            simulationNotice:
-              'SMS simülasyonu etkin: Gerçek ortamda kod telefona gider; şimdilik ekranda gösterilir.',
-          }
-        : {}),
+      ...smsSimulationPayload(this.config, code),
     };
   }
 
@@ -227,6 +220,8 @@ export class CourierRegisterService {
     if (!otp) {
       throw new BadRequestException('Önce telefonunuza SMS kodu gönderin veya süre dolmuş olabilir');
     }
+
+    assertOtpAttemptsNotExceeded(otp.attempts);
 
     const codeOk = await bcrypt.compare(dto.smsCode, otp.codeHash);
     if (!codeOk) {

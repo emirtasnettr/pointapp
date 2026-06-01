@@ -7,13 +7,13 @@
 ## 1. Proje kökünü bul
 
 ```bash
-ls -la /opt/pk1haziran/package.json 2>/dev/null || ls -la /root/pk1haziran/package.json
+ls -la /opt/point/package.json 2>/dev/null || ls -la /root/point/package.json
 ```
 
 Bulunan yolu kaydet:
 
 ```bash
-export POINT_ROOT=/opt/pk1haziran   # GERÇEK YOLU YAZ
+export POINT_ROOT=/opt/point   # GERÇEK YOLU YAZ
 cd "$POINT_ROOT"
 ```
 
@@ -23,7 +23,7 @@ Doğrulama:
 test -f package.json && test -f deploy/env.example && test -f deploy/docker-compose.prod.yml && echo OK
 ```
 
-`OK` görünmeli. Değilse: `git clone https://github.com/emirtasnettr/pk1haziran.git /opt/pk1haziran` ve tekrar dene.
+`OK` görünmeli. Değilse: `git clone https://github.com/emirtasnettr/pointapp.git /opt/point` ve tekrar dene.
 
 ---
 

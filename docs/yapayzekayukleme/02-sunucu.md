@@ -2,7 +2,7 @@
 
 **Görev (yapay zeka):** Ubuntu VPS’te Docker ve temel kontrolleri yap / doğrula. Proje kurulumuna **henüz girme** (Parça 4’te build var).
 
-**Önce:** `cd /opt/pk1haziran` (veya pk1haziran yolu) — bu parçada zorunlu değil ama sonrakiler için alışkanlık olsun.
+**Önce:** `cd /opt/point` (veya point yolu) — bu parçada zorunlu değil ama sonrakiler için alışkanlık olsun.
 
 ---
 

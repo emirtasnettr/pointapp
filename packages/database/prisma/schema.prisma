@@ -81,6 +81,7 @@ model User {
   notifications       Notification[]
   passwordResetTokens PasswordResetToken[]
   smsOtps             SmsOtp[]
+  authHandoffCodes    AuthHandoffCode[]
 
   customerProfile CustomerProfile?
   courierProfile  CourierProfile?
@@ -162,6 +163,22 @@ enum SmsOtpPurpose {
   LOGIN
   PHONE_CHANGE
   PASSWORD_RESET
+  TRACK_DELIVERY
+}
+
+/** Tek kullanımlık panel oturum aktarımı (hash ile saklanır). */
+model AuthHandoffCode {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash   String
+  audience   String
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId, createdAt])
+  @@map("auth_handoff_codes")
 }
 
 // ---------------------------------------------------------------------------

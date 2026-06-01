@@ -366,7 +366,7 @@ Kısa vadeli yol haritası: `docs/ROADMAP.md`.
 
 ## Güvenlik özeti
 
-Rate limit (global + OTP), Helmet, audit + IP, refresh rotation, cihaz oturumu, KVKK için açık rıza logları ve veri minimizasyonu (özellikle harita ve iletişim metadata).
+Rate limit (global + OTP), Helmet, staff RBAC, HTML sanitizasyon, tek kullanımlık panel handoff, gönderi takibinde SMS doğrulama, production env doğrulama. Ayrıntılar: [SECURITY.md](./SECURITY.md).
 
 ---
 

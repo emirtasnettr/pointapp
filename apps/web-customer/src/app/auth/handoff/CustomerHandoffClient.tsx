@@ -7,16 +7,20 @@ import { setCustomerAccessToken } from '@/lib/customer-session';
 import { customerLoginUrl } from '@/lib/customer-login-url';
 import { safeInternalPath } from '@/lib/safe-internal-path';
 
+function apiBase(): string {
+  const raw = process.env.NEXT_PUBLIC_API_URL?.trim();
+  if (raw) return raw.replace(/\/+$/, '');
+  return 'http://localhost:5001/v1';
+}
+
+function handoffCodeFromUrl(): string | null {
+  if (typeof window === 'undefined') return null;
+  return new URLSearchParams(window.location.search).get('code');
+}
+
 function nextFromUrl(): string | null {
   if (typeof window === 'undefined') return null;
   return new URLSearchParams(window.location.search).get('next');
-}
-
-function readAccessTokenFromHash(): string | null {
-  if (typeof window === 'undefined') return null;
-  const raw = window.location.hash.replace(/^#/, '').trim();
-  if (!raw) return null;
-  return new URLSearchParams(raw).get('access_token');
 }
 
 export function CustomerHandoffClient() {
@@ -24,15 +28,39 @@ export function CustomerHandoffClient() {
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
-    const token = readAccessTokenFromHash();
-    if (!token) {
+    const code = handoffCodeFromUrl();
+    if (!code) {
       setErr('Oturum bilgisi alınamadı. Lütfen tekrar giriş yapın.');
       return;
     }
-    setCustomerAccessToken(token);
-    const path = window.location.pathname + window.location.search;
-    window.history.replaceState(null, '', path);
-    router.replace(safeInternalPath(nextFromUrl()));
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const res = await fetch(`${apiBase()}/auth/customer/handoff/redeem`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code }),
+        });
+        if (!res.ok) {
+          if (!cancelled) setErr('Oturum kodu geçersiz veya süresi dolmuş. Lütfen tekrar giriş yapın.');
+          return;
+        }
+        const data = (await res.json()) as { accessToken: string };
+        if (cancelled) return;
+        setCustomerAccessToken(data.accessToken);
+        const path = window.location.pathname + window.location.search;
+        window.history.replaceState(null, '', path.split('?')[0] || '/auth/handoff');
+        router.replace(safeInternalPath(nextFromUrl()));
+      } catch {
+        if (!cancelled) setErr('Bağlantı hatası. Lütfen tekrar giriş yapın.');
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [router]);
 
   if (err) {
@@ -49,7 +77,7 @@ export function CustomerHandoffClient() {
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center gap-3 p-8 text-zinc-600">
       <Loader2 className="h-8 w-8 animate-spin text-brand" aria-hidden />
-      <p className="text-sm font-medium">Panele yönlendiriliyorsunuz…</p>
+      <p className="text-sm">Panele yönlendiriliyorsunuz…</p>
     </main>
   );
 }

@@ -16,7 +16,11 @@ import {
   XCircle,
 } from 'lucide-react';
 import { deliveryStatusLabel } from '@/lib/delivery-status';
-import { trackDeliveriesByPhone, type PublicTrackedDelivery } from '@/lib/delivery-track-public';
+import {
+  requestTrackDeliveryOtp,
+  verifyTrackDeliveryOtp,
+  type PublicTrackedDelivery,
+} from '@/lib/delivery-track-public';
 import { isValidTrPhone, normalizeTrPhone } from '@/lib/guest-delivery-form';
 import { cn } from '@/lib/cn';
 
@@ -146,14 +150,18 @@ function DeliveryCard({ item }: { item: PublicTrackedDelivery }) {
 
 export function MarketingShipmentTrack() {
   const [phone, setPhone] = useState('');
+  const [smsCode, setSmsCode] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [devOtpHint, setDevOtpHint] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [searched, setSearched] = useState(false);
   const [items, setItems] = useState<PublicTrackedDelivery[]>([]);
 
-  async function onSubmit(e: React.FormEvent) {
+  async function onRequestOtp(e: React.FormEvent) {
     e.preventDefault();
     setErr(null);
+    setDevOtpHint(null);
     if (!isValidTrPhone(phone)) {
       setErr('Geçerli bir cep telefonu girin (ör. 0555 123 45 67).');
       return;
@@ -161,7 +169,27 @@ export function MarketingShipmentTrack() {
     setPending(true);
     setSearched(false);
     try {
-      const data = await trackDeliveriesByPhone(normalizeTrPhone(phone));
+      const res = await requestTrackDeliveryOtp(normalizeTrPhone(phone));
+      setOtpSent(true);
+      if (res.simulatedOtp) setDevOtpHint(res.simulatedOtp);
+    } catch (message) {
+      setErr(message instanceof Error ? message : 'SMS gönderilemedi.');
+      setOtpSent(false);
+    } finally {
+      setPending(false);
+    }
+  }
+
+  async function onVerify(e: React.FormEvent) {
+    e.preventDefault();
+    setErr(null);
+    if (!smsCode.trim()) {
+      setErr('SMS kodunu girin.');
+      return;
+    }
+    setPending(true);
+    try {
+      const data = await verifyTrackDeliveryOtp(normalizeTrPhone(phone), smsCode.trim());
       setItems(data.items);
       setSearched(true);
     } catch (message) {
@@ -184,13 +212,12 @@ export function MarketingShipmentTrack() {
           Gönderinizi sorgulayın
         </h1>
         <p className="mt-3 text-base leading-relaxed text-zinc-600">
-          Kayıtlı telefon numaranızla son gönderilerinizi görüntüleyin. Gönderen veya alıcı olarak kayıtlı
-          siparişler listelenir.
+          Telefonunuza gelen doğrulama kodu ile son gönderilerinizi güvenli şekilde görüntüleyin.
         </p>
       </div>
 
       <form
-        onSubmit={onSubmit}
+        onSubmit={otpSent ? onVerify : onRequestOtp}
         className="mt-10 rounded-3xl border border-zinc-200/90 bg-gradient-to-br from-zinc-50/90 to-white p-6 shadow-soft sm:p-8"
       >
         <label htmlFor="track-phone" className="block text-sm font-semibold text-zinc-900">
@@ -209,23 +236,58 @@ export function MarketingShipmentTrack() {
               inputMode="tel"
               placeholder="0555 123 45 67"
               value={phone}
+              disabled={otpSent}
               onChange={(e) => setPhone(e.target.value)}
-              className="w-full rounded-xl border border-zinc-200/90 bg-white py-3 pl-10 pr-3 text-sm text-zinc-900 shadow-sm outline-none transition focus:border-brand/40 focus:ring-2 focus:ring-brand/15"
+              className="w-full rounded-xl border border-zinc-200/90 bg-white py-3 pl-10 pr-3 text-sm text-zinc-900 shadow-sm outline-none transition focus:border-brand/40 focus:ring-2 focus:ring-brand/15 disabled:bg-zinc-50"
             />
           </div>
-          <button
-            type="submit"
-            disabled={pending}
-            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-brand px-6 py-3 text-sm font-semibold text-white shadow-soft transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {pending ? (
-              <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-            ) : (
-              <Search className="h-4 w-4" aria-hidden />
-            )}
-            Sorgula
-          </button>
+          {!otpSent ? (
+            <button
+              type="submit"
+              disabled={pending}
+              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-brand px-6 py-3 text-sm font-semibold text-white shadow-soft transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {pending ? (
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+              ) : (
+                <Search className="h-4 w-4" aria-hidden />
+              )}
+              Kod gönder
+            </button>
+          ) : null}
         </div>
+
+        {otpSent ? (
+          <div className="mt-5 space-y-3">
+            <label htmlFor="track-sms" className="block text-sm font-semibold text-zinc-900">
+              SMS doğrulama kodu
+            </label>
+            <input
+              id="track-sms"
+              type="text"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              placeholder="6 haneli kod"
+              value={smsCode}
+              onChange={(e) => setSmsCode(e.target.value)}
+              className="w-full rounded-xl border border-zinc-200/90 bg-white px-3 py-3 text-sm text-zinc-900 shadow-sm outline-none transition focus:border-brand/40 focus:ring-2 focus:ring-brand/15"
+            />
+            {devOtpHint ? (
+              <p className="rounded-xl border border-amber-200/90 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                Geliştirme OTP: <strong>{devOtpHint}</strong>
+              </p>
+            ) : null}
+            <button
+              type="submit"
+              disabled={pending}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-6 py-3 text-sm font-semibold text-white shadow-soft transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+            >
+              {pending ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
+              Sorgula
+            </button>
+          </div>
+        ) : null}
+
         {err ? (
           <p className="mt-3 rounded-xl border border-red-200/90 bg-red-50 px-3 py-2 text-sm text-red-800">
             {err}

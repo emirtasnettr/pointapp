@@ -1,6 +1,9 @@
 import { Controller, Get, Query, Req, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import type { Request } from 'express';
+import { RequirePermissions } from '../auth/rbac/require-permissions.decorator';
+import { StaffPermissionsGuard } from '../auth/rbac/staff-permissions.guard';
+import { StaffPerm } from '../auth/rbac/staff-permissions';
 import { StatsService } from './stats.service';
 import type { CourierJwtUser } from '../auth/strategies/courier-jwt.strategy';
 
@@ -9,7 +12,8 @@ export class StatsController {
   constructor(private readonly stats: StatsService) {}
 
   @Get('dashboard')
-  @UseGuards(AuthGuard('staff-jwt'))
+  @UseGuards(AuthGuard('staff-jwt'), StaffPermissionsGuard)
+  @RequirePermissions(StaffPerm.DELIVERIES_READ)
   dashboard() {
     return this.stats.dashboard();
   }

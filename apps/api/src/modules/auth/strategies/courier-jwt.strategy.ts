@@ -2,6 +2,8 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
+import { UserStatus } from '@prisma/client';
+import { getJwtSecret } from '../../../config/jwt-secret';
 import { PrismaService } from '../../../prisma/prisma.service';
 
 export type CourierJwtPayload = { sub: string; typ?: string };
@@ -22,7 +24,7 @@ export class CourierJwtStrategy extends PassportStrategy(Strategy, 'courier-jwt'
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: config.get<string>('JWT_SECRET', 'point-dev-jwt-change-me'),
+      secretOrKey: getJwtSecret(config),
     });
   }
 
@@ -32,10 +34,17 @@ export class CourierJwtStrategy extends PassportStrategy(Strategy, 'courier-jwt'
     }
     const courier = await this.prisma.courierProfile.findUnique({
       where: { userId: payload.sub },
-      select: { id: true, publicId: true },
+      select: {
+        id: true,
+        publicId: true,
+        user: { select: { status: true } },
+      },
     });
     if (!courier) {
       throw new UnauthorizedException();
+    }
+    if (courier.user.status !== UserStatus.ACTIVE) {
+      throw new UnauthorizedException('Hesap aktif değil');
     }
     return {
       userId: payload.sub,

@@ -1,4 +1,5 @@
 import { Body, Controller, Post } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { CourierAuthService } from './courier-auth.service';
 import { CustomerAuthService } from './customer-auth.service';
 import { StaffAuthService } from './staff-auth.service';
@@ -13,6 +14,7 @@ export class CourierAuthController {
   ) {}
 
   @Post('courier/login')
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   courierLogin(@Body() body: CourierLoginDto) {
     return this.courierAuth.courierLogin(body);
   }
@@ -23,6 +25,7 @@ export class CourierAuthController {
   }
 
   @Post('staff/login')
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   staffLogin(@Body() body: CourierLoginDto) {
     return this.staffAuth.staffLogin(body);
   }

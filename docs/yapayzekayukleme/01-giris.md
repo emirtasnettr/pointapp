@@ -8,9 +8,9 @@
 
 **Point** — monorepo: NestJS API, iki Next.js web uygulaması, PostgreSQL, Docker Compose, Caddy HTTPS.
 
-- **Repo:** https://github.com/emirtasnettr/pk1haziran.git  
+- **Repo:** https://github.com/emirtasnettr/pointapp.git  
 - **Dal:** `main`  
-- **VPS klasör adı:** `pk1haziran` (dosyalar buraya aktarıldı)
+- **VPS klasör adı:** `point` (dosyalar buraya aktarıldı)
 - **Alan adı:** `pointkurye.net.tr` → `api.` / `www.` / `app.` alt alan adları (Parça 3)
 
 ---
@@ -21,7 +21,7 @@
 2. **`/root` içinde `npm` veya `cp deploy/...` çalıştırma** — `package.json` / `deploy/env.example` bulunamaz.
 3. Her oturum başı:
    ```bash
-   cd /opt/pk1haziran   # veya /root/pk1haziran — gerçek yolu kullan
+   cd /opt/point   # veya /root/point — gerçek yolu kullan
    pwd
    ls deploy/env.example
    ```

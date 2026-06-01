@@ -15,6 +15,9 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '@nestjs/passport';
+import { RequirePermissions } from '../auth/rbac/require-permissions.decorator';
+import { StaffPermissionsGuard } from '../auth/rbac/staff-permissions.guard';
+import { StaffPerm } from '../auth/rbac/staff-permissions';
 import type { Request } from 'express';
 import type { StaffJwtUser } from '../auth/strategies/staff-jwt.strategy';
 import { CreateMarketingServiceDto } from './dto/create-marketing-service.dto';
@@ -24,7 +27,8 @@ import { MarketingServicesService } from './marketing-services.service';
 type MultipartFile = { buffer: Buffer; mimetype: string; size: number };
 
 @Controller('staff/marketing-services')
-@UseGuards(AuthGuard('staff-jwt'))
+@UseGuards(AuthGuard('staff-jwt'), StaffPermissionsGuard)
+@RequirePermissions(StaffPerm.MARKETING_MANAGE)
 export class StaffMarketingServicesController {
   constructor(
     private readonly services: MarketingServicesService,

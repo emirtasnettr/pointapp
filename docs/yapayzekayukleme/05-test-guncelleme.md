@@ -3,7 +3,7 @@
 **Görev (yapay zeka):** Kurulumun çalıştığını doğrula. İsteğe bağlı seed. Güncelleme komutlarını not et.
 
 ```bash
-export POINT_ROOT=/opt/pk1haziran
+export POINT_ROOT=/opt/point
 cd "$POINT_ROOT"
 ```
 

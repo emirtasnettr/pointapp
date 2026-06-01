@@ -1,13 +1,16 @@
 import path from 'node:path';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { AuthModule } from '../auth/auth.module';
 import { LocalStorageAdapter } from '../../providers/storage/local-storage.adapter';
+import { LocalFilesAccessService } from './local-files-access.service';
 import { LocalFilesController } from './local-files.controller';
 
 @Module({
-  imports: [ConfigModule],
+  imports: [ConfigModule, AuthModule],
   controllers: [LocalFilesController],
   providers: [
+    LocalFilesAccessService,
     {
       provide: LocalStorageAdapter,
       useFactory: (config: ConfigService) => {

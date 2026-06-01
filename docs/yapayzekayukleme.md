@@ -2,8 +2,8 @@
 
 Tek seferde uzun metin veremiyorsanız **sırayla** aşağıdaki dosyaları yapay zekaya iletin. Her parçanın sonunda “Parça X bitti” deyip **sonraki parçayı** gönderin.
 
-**Proje klasörü (VPS):** `pk1haziran` — tipik yol `/opt/pk1haziran` veya `/root/pk1haziran`  
-**GitHub:** https://github.com/emirtasnettr/pk1haziran.git (dal: `main`)
+**Proje klasörü (VPS):** `point` — tipik yol `/opt/point` veya `/root/point`  
+**GitHub:** https://github.com/emirtasnettr/pointapp.git (dal: `main`)
 
 ## Alan adları (pointkurye.net.tr)
 
@@ -45,8 +45,10 @@ Kök `pointkurye.net.tr` isteğe bağlı (www’ye yönlendirme ayrı ayarlanır
 ## Kısa hatırlatma (her parçada geçer)
 
 ```bash
-cd /opt/pk1haziran    # veya pk1haziran'ın gerçek yolu — /root içinde DEĞİL
+cd /opt/point    # veya point'in gerçek yolu — /root içinde DEĞİL
 ls deploy/env.example # bu dosya görünmeli
 ```
 
 İnsan odaklı özet: [DEPLOYMENT.md](./DEPLOYMENT.md)
+
+**Sadece Postgres+Redis çalışıyor / 80-443 timeout:** [vps-kurulum-duzeltme.md](./vps-kurulum-duzeltme.md) (parçalı düzeltme rehberi)

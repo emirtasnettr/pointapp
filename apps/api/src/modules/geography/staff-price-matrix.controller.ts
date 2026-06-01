@@ -9,6 +9,9 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { RequirePermissions } from '../auth/rbac/require-permissions.decorator';
+import { StaffPermissionsGuard } from '../auth/rbac/staff-permissions.guard';
+import { StaffPerm } from '../auth/rbac/staff-permissions';
 import { BulkAdjustPriceMatrixDto } from './dto/bulk-adjust-price-matrix.dto';
 import { RevisePriceMatrixCellDto } from './dto/revise-price-matrix-cell.dto';
 import { PatchStaffDistrictDto } from './dto/patch-staff-district.dto';
@@ -18,7 +21,8 @@ import { StaffGeographyAdminService } from './staff-geography-admin.service';
 
 /** Staff coğrafya: fiyat matrisi + ilçe/mahalle (pasif, ek ücret). */
 @Controller('staff/geography')
-@UseGuards(AuthGuard('staff-jwt'))
+@UseGuards(AuthGuard('staff-jwt'), StaffPermissionsGuard)
+@RequirePermissions(StaffPerm.DELIVERIES_WRITE)
 export class StaffPriceMatrixController {
   constructor(
     private readonly geographyMatrix: GeographyMatrixService,
@@ -53,6 +57,11 @@ export class StaffPriceMatrixController {
   @Patch('neighborhoods/:id')
   patchNeighborhood(@Param('id') id: string, @Body() body: PatchStaffNeighborhoodDto) {
     return this.geoAdmin.patchNeighborhood(id.trim(), body);
+  }
+
+  @Get('price-matrix')
+  priceMatrix() {
+    return this.geographyMatrix.listActiveMatrix();
   }
 
   /** Aktif matris hücresini yeni versiyonla değiştirir; önceki satır kapanır (geçmiş korunur). */

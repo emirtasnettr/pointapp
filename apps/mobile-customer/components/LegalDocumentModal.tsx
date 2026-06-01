@@ -85,7 +85,13 @@ export function LegalDocumentModal({ slug, visible, onClose }: Props) {
             <Text style={styles.err}>{err}</Text>
           </View>
         ) : (
-          <WebView originWhitelist={['*']} source={{ html }} style={styles.web} showsVerticalScrollIndicator />
+          <WebView
+            originWhitelist={['about:blank']}
+            source={{ html, baseUrl: 'about:blank' }}
+            style={styles.web}
+            javaScriptEnabled={false}
+            showsVerticalScrollIndicator
+          />
         )}
 
         <View style={styles.footer}>

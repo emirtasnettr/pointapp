@@ -2,6 +2,9 @@ import { BadRequestException, Body, Controller, Get, Param, Patch, Post, Req, Up
 import { ConfigService } from '@nestjs/config';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '@nestjs/passport';
+import { RequirePermissions } from '../auth/rbac/require-permissions.decorator';
+import { StaffPermissionsGuard } from '../auth/rbac/staff-permissions.guard';
+import { StaffPerm } from '../auth/rbac/staff-permissions';
 import type { Request } from 'express';
 import type { StaffJwtUser } from '../auth/strategies/staff-jwt.strategy';
 import { PatchStaffSettingsDto } from './dto/patch-staff-settings.dto';
@@ -10,7 +13,8 @@ import { StaffSettingsService } from './staff-settings.service';
 type LogoMultipartFile = { buffer: Buffer; mimetype: string; size: number };
 
 @Controller('staff/settings')
-@UseGuards(AuthGuard('staff-jwt'))
+@UseGuards(AuthGuard('staff-jwt'), StaffPermissionsGuard)
+@RequirePermissions(StaffPerm.SETTINGS_MANAGE)
 export class StaffSettingsController {
   constructor(
     private readonly settings: StaffSettingsService,

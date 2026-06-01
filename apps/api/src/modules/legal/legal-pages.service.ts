@@ -1,6 +1,7 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { AppRole, Prisma } from '@prisma/client';
 import type { StaffJwtUser } from '../auth/strategies/staff-jwt.strategy';
+import { assertRichHtmlLength } from '../../common/html-sanitize';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   getLegalPageDefForAudience,
@@ -26,14 +27,11 @@ function htmlFromSettingValue(raw: Prisma.JsonValue | null | undefined): string 
 }
 
 function normalizeHtml(html: string): string {
-  const trimmed = html.trim();
-  if (trimmed.length > 500_000) {
+  try {
+    return assertRichHtmlLength(html);
+  } catch {
     throw new BadRequestException('İçerik çok uzun (en fazla 500.000 karakter)');
   }
-  if (/<script\b/i.test(trimmed)) {
-    throw new BadRequestException('İçerikte script etiketine izin verilmez');
-  }
-  return trimmed;
 }
 
 @Injectable()

@@ -1,11 +1,15 @@
 import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { RequirePermissions } from '../auth/rbac/require-permissions.decorator';
+import { StaffPermissionsGuard } from '../auth/rbac/staff-permissions.guard';
+import { StaffPerm } from '../auth/rbac/staff-permissions';
 import { CreateStaffCampaignDto } from './dto/create-staff-campaign.dto';
 import { PatchStaffCampaignDto } from './dto/patch-staff-campaign.dto';
 import { StaffCampaignsService } from './staff-campaigns.service';
 
 @Controller('staff/campaigns')
-@UseGuards(AuthGuard('staff-jwt'))
+@UseGuards(AuthGuard('staff-jwt'), StaffPermissionsGuard)
+@RequirePermissions(StaffPerm.CAMPAIGNS_READ)
 export class StaffCampaignsController {
   constructor(private readonly campaigns: StaffCampaignsService) {}
 

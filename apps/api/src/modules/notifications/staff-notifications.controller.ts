@@ -1,12 +1,16 @@
 import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { RequirePermissions } from '../auth/rbac/require-permissions.decorator';
+import { StaffPermissionsGuard } from '../auth/rbac/staff-permissions.guard';
+import { StaffPerm } from '../auth/rbac/staff-permissions';
 import { BroadcastCustomerPushDto } from './dto/broadcast-customer-push.dto';
 import { CreateStaffNotificationDto } from './dto/create-staff-notification.dto';
 import { ListStaffNotificationsDto } from './dto/list-staff-notifications.dto';
 import { StaffNotificationsService } from './staff-notifications.service';
 
 @Controller('staff/notifications')
-@UseGuards(AuthGuard('staff-jwt'))
+@UseGuards(AuthGuard('staff-jwt'), StaffPermissionsGuard)
+@RequirePermissions(StaffPerm.NOTIFICATIONS_WRITE)
 export class StaffNotificationsController {
   constructor(private readonly staffNotifications: StaffNotificationsService) {}
 

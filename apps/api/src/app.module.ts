@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
-import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { PrismaModule } from './prisma/prisma.module';
 import { GeographyModule } from './modules/geography/geography.module';
 import { HealthModule } from './modules/health/health.module';
@@ -45,6 +46,12 @@ import { MarketingServicesModule } from './modules/marketing-services/marketing-
     LegalModule,
     MarketingCampaignsModule,
     MarketingServicesModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
   ],
 })
 export class AppModule {}

@@ -70,7 +70,9 @@ export function apiBase(): string {
   if (fromEnv) return normalizeApiRoot(resolveDevApiUrlFromEnv(fromEnv));
 
   if (!__DEV__) {
-    return 'http://localhost:5001/v1';
+    throw new Error(
+      'EXPO_PUBLIC_API_URL tanımlı değil. Production build için API adresini .env veya EAS secrets ile verin.',
+    );
   }
 
   const hostUri = Constants.expoConfig?.hostUri;

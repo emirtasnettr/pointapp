@@ -3,18 +3,27 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
+import { validateEnvOnBootstrap } from './config/validate-env';
 import { PrismaExceptionFilter } from './prisma/prisma-exception.filter';
 
 async function bootstrap() {
+  validateEnvOnBootstrap();
+
   const app = await NestFactory.create(AppModule, { cors: false });
+  const nodeEnv = process.env.NODE_ENV ?? 'development';
   const origins =
     process.env.CORS_ORIGINS?.split(',')
       .map((s) => s.trim())
       .filter(Boolean) ?? [];
+  if (nodeEnv === 'production' && origins.length === 0) {
+    throw new Error('CORS_ORIGINS production ortamında zorunludur');
+  }
   app.enableCors(
     origins.length > 0
       ? { origin: origins, credentials: true }
-      : { origin: true, credentials: true },
+      : nodeEnv === 'production'
+        ? false
+        : { origin: true, credentials: true },
   );
   app.useGlobalPipes(
     new ValidationPipe({

@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { AppRole } from '@prisma/client';
 import { randomUUID } from 'node:crypto';
 import sizeOf from 'image-size';
+import { assertRichHtmlLength } from '../../common/html-sanitize';
 import { apiOriginFromConfig, resolvePublicFileUrl } from '../../common/resolve-public-file-url';
 import type { StaffJwtUser } from '../auth/strategies/staff-jwt.strategy';
 import { isValidMarketingSlug, slugifyMarketingTitle } from '../marketing-campaigns/slug.util';
@@ -20,14 +21,11 @@ function assertSystemAdmin(u: StaffJwtUser) {
 }
 
 function normalizeHtml(html: string): string {
-  const trimmed = html.trim();
-  if (trimmed.length > 500_000) {
+  try {
+    return assertRichHtmlLength(html);
+  } catch {
     throw new BadRequestException('İçerik çok uzun (en fazla 500.000 karakter)');
   }
-  if (/<script\b/i.test(trimmed)) {
-    throw new BadRequestException('İçerikte script etiketine izin verilmez');
-  }
-  return trimmed;
 }
 
 const selectPublic = {

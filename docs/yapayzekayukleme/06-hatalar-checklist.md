@@ -8,7 +8,7 @@
 
 | Belirti | Sebep | Çözüm |
 |---------|--------|--------|
-| `cannot stat 'deploy/env.example'` | Yanlış dizin (`/root`) | `cd` → pk1haziran kökü |
+| `cannot stat 'deploy/env.example'` | Yanlış dizin (`/root`) | `cd` → point kökü |
 | `ENOENT .../root/package.json` | npm kök dışında | `cd "$POINT_ROOT"` |
 | Caddy ACME hatası | DNS yayılmadı | A kayıtları; bekle; `logs caddy` |
 | 502 Bad Gateway | api/web çökmüş | `logs api` `logs web-admin` |

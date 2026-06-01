@@ -14,7 +14,7 @@ import {
   authFieldClass,
 } from '@/components/customer/auth-ui';
 import { apiBase } from '@/lib/api';
-import { customerPanelHandoffUrl } from '@/lib/marketing-links';
+import { redirectToCustomerPanelWithHandoff } from '@/lib/customer-handoff';
 import { parseApiError } from '@/lib/parse-api-error';
 
 type LoginResponse = {
@@ -53,7 +53,7 @@ export function CustomerLoginClient() {
         return;
       }
       const data = (await res.json()) as LoginResponse;
-      window.location.assign(customerPanelHandoffUrl(data.accessToken, nextFromUrl()));
+      await redirectToCustomerPanelWithHandoff(data.accessToken, nextFromUrl());
     } catch {
       setErr('Bağlantı hatası');
     } finally {

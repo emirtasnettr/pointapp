@@ -17,6 +17,7 @@ import {
   VehicleType,
 } from '@prisma/client';
 import { trPhoneLookupVariants } from '../../common/tr-phone.util';
+import { staffMaySetManualDeliveryPrice } from '../auth/rbac/staff-permissions';
 import { PrismaService } from '../../prisma/prisma.service';
 import { SystemConfigService } from '../settings/system-config.service';
 import { DeliveryPricingService } from './delivery-pricing.service';
@@ -898,7 +899,10 @@ export class DeliveriesService {
     return this.toJsonWithLogs(row);
   }
 
-  async create(dto: CreateDeliveryDto) {
+  async create(
+    dto: CreateDeliveryDto,
+    opts?: { staffAppRole?: AppRole; allowManualPricing?: boolean },
+  ) {
     if (dto.paymentMethod === PaymentMethod.WALLET) {
       throw new BadRequestException('Cüzdan ile ödeme şu an kullanılamıyor.');
     }
@@ -943,6 +947,12 @@ export class DeliveriesService {
     let priceBreakdown: Prisma.InputJsonValue;
 
     if (dto.totalPrice?.trim() && dto.commissionRate?.trim()) {
+      if (!opts?.allowManualPricing) {
+        throw new BadRequestException('Manuel fiyat girişine izin verilmedi');
+      }
+      if (!opts.staffAppRole || !staffMaySetManualDeliveryPrice(opts.staffAppRole)) {
+        throw new ForbiddenException('Manuel fiyat için yetkiniz bulunmuyor');
+      }
       total = new Prisma.Decimal(dto.totalPrice);
       rate = new Prisma.Decimal(dto.commissionRate);
       commissionAmount = total.mul(rate);
@@ -963,8 +973,8 @@ export class DeliveriesService {
       priceBreakdown = quoted.priceBreakdown as Prisma.InputJsonValue;
     }
 
-    const initialPaymentStatus =
-      dto.paymentMethod === PaymentMethod.CARD ? PaymentStatus.CAPTURED : PaymentStatus.PENDING;
+    /** Kart ödemesi PSP onayı olmadan CAPTURED yapılmaz. */
+    const initialPaymentStatus = PaymentStatus.PENDING;
 
     const created = await this.prisma.$transaction(async (tx) => {
       const orderNumber = await this.allocateOrderNumber(tx);

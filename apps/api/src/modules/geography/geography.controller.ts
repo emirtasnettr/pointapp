@@ -49,12 +49,6 @@ export class GeographyController {
     }));
   }
 
-  /** Aktif (effectiveTo boş) bölgeden bölgeye fiyat satırları — admin önizleme */
-  @Get('price-matrix')
-  priceMatrix() {
-    return this.geographyMatrix.listActiveMatrix();
-  }
-
   /** Fiyat matrisi PZ bölgeleri (IST-PZ…) — ilçe ataması için; kimlik gerekmez (salt okunur meta). */
   @Get('pricing-zones')
   pricingZones() {

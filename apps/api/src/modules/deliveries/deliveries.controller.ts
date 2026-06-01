@@ -13,6 +13,9 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '@nestjs/passport';
 import type { Request } from 'express';
+import { RequirePermissions } from '../auth/rbac/require-permissions.decorator';
+import { StaffPermissionsGuard } from '../auth/rbac/staff-permissions.guard';
+import { StaffPerm } from '../auth/rbac/staff-permissions';
 import type { StaffJwtUser } from '../auth/strategies/staff-jwt.strategy';
 import { DeliveryCustomerInvoiceService } from './delivery-customer-invoice.service';
 import { DELIVERY_CUSTOMER_INVOICE_MAX_BYTES } from './delivery-customer-invoice.constants';
@@ -56,6 +59,7 @@ export class DeliveriesController {
   }
 
   @Post('customer-invoices')
+  @RequirePermissions(StaffPerm.DELIVERIES_WRITE)
   @UseInterceptors(
     FileInterceptor('file', { limits: { fileSize: DELIVERY_CUSTOMER_INVOICE_MAX_BYTES } }),
   )
@@ -88,11 +92,16 @@ export class DeliveriesController {
   }
 
   @Post()
-  create(@Body() body: CreateDeliveryDto) {
-    return this.deliveries.create(body);
+  @RequirePermissions(StaffPerm.DELIVERIES_WRITE)
+  create(@Req() req: Request & { user: StaffJwtUser }, @Body() body: CreateDeliveryDto) {
+    return this.deliveries.create(body, {
+      allowManualPricing: true,
+      staffAppRole: req.user.appRole,
+    });
   }
 
   @Post(':ref/assign-courier')
+  @RequirePermissions(StaffPerm.DELIVERIES_WRITE)
   assignCourier(
     @Req() req: Request & { user: StaffJwtUser },
     @Param('ref') ref: string,
@@ -102,11 +111,13 @@ export class DeliveriesController {
   }
 
   @Post(':ref/unassign-courier')
+  @RequirePermissions(StaffPerm.DELIVERIES_WRITE)
   unassignCourier(@Req() req: Request & { user: StaffJwtUser }, @Param('ref') ref: string) {
     return this.deliveries.staffUnassignCourier(req.user.userId, req.user.staffProfileId, ref);
   }
 
   @Post(':ref/set-status')
+  @RequirePermissions(StaffPerm.DELIVERIES_WRITE)
   setStatus(
     @Req() req: Request & { user: StaffJwtUser },
     @Param('ref') ref: string,

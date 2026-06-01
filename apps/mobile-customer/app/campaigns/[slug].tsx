@@ -131,7 +131,14 @@ export default function CampaignDetailScreen() {
         ) : null}
         <Text style={[styles.summary, expired && styles.muted]}>{campaign.summary}</Text>
       </ScrollView>
-      <WebView originWhitelist={['*']} source={{ html }} style={styles.web} showsVerticalScrollIndicator />
+      <WebView
+        originWhitelist={['about:blank']}
+        source={{ html, baseUrl: 'about:blank' }}
+        style={styles.web}
+        javaScriptEnabled={false}
+        allowsInlineMediaPlayback={false}
+        showsVerticalScrollIndicator
+      />
     </View>
   );
 }

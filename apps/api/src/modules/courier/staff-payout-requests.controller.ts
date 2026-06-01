@@ -1,5 +1,8 @@
 import { Body, Controller, Get, Param, Patch, Query, Req, StreamableFile, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { RequirePermissions } from '../auth/rbac/require-permissions.decorator';
+import { StaffPermissionsGuard } from '../auth/rbac/staff-permissions.guard';
+import { StaffPerm } from '../auth/rbac/staff-permissions';
 import type { Request } from 'express';
 import type { StaffJwtUser } from '../auth/strategies/staff-jwt.strategy';
 import { ListStaffPayoutRequestsDto } from './dto/list-staff-payout-requests.dto';
@@ -7,7 +10,8 @@ import { PatchStaffPayoutRequestDto } from './dto/patch-staff-payout-request.dto
 import { StaffPayoutRequestsService } from './staff-payout-requests.service';
 
 @Controller('staff/payout-requests')
-@UseGuards(AuthGuard('staff-jwt'))
+@UseGuards(AuthGuard('staff-jwt'), StaffPermissionsGuard)
+@RequirePermissions(StaffPerm.FINANCE_WRITE)
 export class StaffPayoutRequestsController {
   constructor(private readonly staffPayouts: StaffPayoutRequestsService) {}
 

@@ -57,6 +57,8 @@
     "deploy:build": "bash deploy/scripts/prod-build.sh",
     "deploy:migrate": "bash deploy/scripts/prod-migrate.sh",
     "deploy:up": "bash deploy/scripts/prod-up.sh",
+    "deploy:install": "bash deploy/install.sh",
+    "deploy:status": "bash deploy/scripts/prod-status.sh",
     "setup:local": "npm run sync:env && npm run dev:infra && npm run db:generate && npm run db:migrate:deploy && npm run db:seed",
     "sync:env": "node scripts/sync-local-env.mjs",
     "ensure:guest": "node scripts/ensure-guest-customer.mjs",

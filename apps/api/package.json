@@ -31,6 +31,7 @@
     "passport-jwt": "^4.0.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
+    "sanitize-html": "^2.17.4",
     "socket.io": "^4.8.1"
   },
   "devDependencies": {
@@ -41,6 +42,7 @@
     "@types/image-size": "^0.7.0",
     "@types/node": "^22.10.0",
     "@types/passport-jwt": "^4.0.1",
+    "@types/sanitize-html": "^2.16.1",
     "eslint": "^9.17.0",
     "typescript": "^5.8.0"
   }
