@@ -59,6 +59,7 @@
     "db:push": "npm run push -w @point/database",
     "db:studio": "npm run studio -w @point/database",
     "db:seed": "npm run seed -w @point/database",
+    "db:seed:geography": "npm run seed:geography -w @point/database",
     "dev:infra": "docker compose up -d",
     "deploy:build": "bash deploy/scripts/prod-build.sh",
     "deploy:migrate": "bash deploy/scripts/prod-migrate.sh",
