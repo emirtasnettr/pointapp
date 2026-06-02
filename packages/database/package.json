@@ -15,6 +15,7 @@
     "studio": "prisma studio",
     "seed": "prisma db seed",
     "seed:geography": "tsx prisma/seed-geography-only.ts",
+    "ensure:guest": "tsx prisma/ensure-guest-customer.ts",
     "geo:build-mahalle": "node prisma/scripts/build-istanbul-mahalle-from-ibb.mjs",
     "build": "prisma generate"
   },

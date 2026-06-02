@@ -71,7 +71,7 @@
     "deploy:test-e2e:quick": "bash deploy/scripts/test-install-e2e.sh --quick",
     "setup:local": "npm run sync:env && npm run dev:infra && npm run db:generate && npm run db:migrate:deploy && npm run db:seed",
     "sync:env": "node scripts/sync-local-env.mjs",
-    "ensure:guest": "node scripts/ensure-guest-customer.mjs",
+    "ensure:guest": "npm run ensure:guest -w @point/database",
     "dev": "npm run sync:env && npm run ports:free && concurrently -n api,admin,customer -c blue,cyan,magenta \"cross-env PORT=7199 npm run dev:api\" \"cross-env WEB_ADMIN_PORT=7200 NEXT_PUBLIC_API_URL=http://localhost:7199/v1 NEXT_PUBLIC_CUSTOMER_WEB_URL=http://localhost:7201 npm run dev:web-admin\" \"cross-env WEB_CUSTOMER_PORT=7201 NEXT_PUBLIC_API_URL=http://localhost:7199/v1 npm run dev:web-customer\"",
     "dev:admin": "npm run sync:env && npm run ports:free && concurrently -n api,admin -c blue,cyan \"cross-env PORT=5001 npm run dev:api\" \"cross-env WEB_ADMIN_PORT=5050 NEXT_PUBLIC_API_URL=http://localhost:5001/v1 npm run dev:web-admin\"",
     "dev:admin:alt": "npm run sync:env && npm run ports:free && concurrently -n api,admin -c blue,cyan \"cross-env PORT=6101 npm run dev:api\" \"cross-env WEB_ADMIN_PORT=6105 NEXT_PUBLIC_API_URL=http://localhost:6101/v1 npm run dev:web-admin\"",
