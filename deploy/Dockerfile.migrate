@@ -5,5 +5,5 @@ RUN apt-get update -y && apt-get install -y --no-install-recommends openssl ca-c
 COPY package.json package-lock.json ./
 COPY apps ./apps
 COPY packages ./packages
-RUN npm ci
+RUN npm ci && npm run db:generate
 CMD ["npm", "run", "migrate:deploy", "-w", "@point/database"]

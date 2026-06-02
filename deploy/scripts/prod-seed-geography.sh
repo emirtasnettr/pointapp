@@ -11,5 +11,5 @@ echo "==> migrate imajı (seed dosyaları)…"
 docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env build migrate
 echo "==> Coğrafya + fiyat matrisi seed (idempotent)…"
 docker compose -f deploy/docker-compose.prod.yml --env-file deploy/.env run --rm migrate \
-  npx tsx packages/database/prisma/seed-geography-only.ts
+  sh -c "npm run db:generate && npx tsx packages/database/prisma/seed-geography-only.ts"
 echo "✔ Tamam."
