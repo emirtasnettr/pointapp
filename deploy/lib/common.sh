@@ -80,9 +80,9 @@ point_prompt() {
 generate_secret() {
   local len="${1:-48}"
   if command -v openssl >/dev/null 2>&1; then
-    openssl rand -base64 "$len" | tr -d '/+=' | head -c "$len"
+    openssl rand -hex "$(( (len + 1) / 2 ))" | head -c "$len"
   else
-    tr -dc 'A-Za-z0-9' </dev/urandom | head -c "$len"
+    LC_ALL=C tr -dc 'A-Za-z0-9' </dev/urandom | head -c "$len"
   fi
 }
 

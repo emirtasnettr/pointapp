@@ -9,7 +9,7 @@ CREATE TABLE "customer_saved_addresses" (
     "lng" DOUBLE PRECISION,
     "sortOrder" INTEGER NOT NULL DEFAULT 0,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "customer_saved_addresses_pkey" PRIMARY KEY ("id")
 );

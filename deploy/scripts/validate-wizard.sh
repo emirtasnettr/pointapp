@@ -62,10 +62,12 @@ else
 fi
 
 echo "==> API build"
-if npm run build -w @point/api --silent 2>/dev/null; then
+if npm run db:generate --silent 2>/dev/null && npm run build -w @point/api --silent 2>/dev/null; then
   say_ok "npm run build -w @point/api"
 else
   say_fail "API build"
+  npm run db:generate 2>&1 | tail -5 >&2 || true
+  npm run build -w @point/api 2>&1 | tail -15 >&2 || true
 fi
 
 echo "==> web-customer build (Next.js — prod Docker adımı)"

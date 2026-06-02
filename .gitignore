@@ -9,6 +9,8 @@ coverage
 .env.*
 !.env.example
 deploy/.env
+deploy/.env.e2e-test
+deploy/.env.test
 .DS_Store
 apps/api/storage
 uploads

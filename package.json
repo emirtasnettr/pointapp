@@ -6,6 +6,8 @@
     "packages/*"
   ],
   "devDependencies": {
+    "@types/react": "18.3.12",
+    "@types/react-dom": "18.3.1",
     "concurrently": "^9.1.0",
     "cross-env": "^7.0.3"
   },
@@ -19,10 +21,12 @@
     "@types/react": "18.3.12",
     "@types/react-dom": "18.3.1",
     "@point/mobile-courier": {
-      "react": "19.1.0"
+      "react": "19.1.0",
+      "@types/react": "~19.1.10"
     },
     "@point/mobile-customer": {
-      "react": "19.1.0"
+      "react": "19.1.0",
+      "@types/react": "~19.1.10"
     },
     "@point/web-admin": {
       "react": "18.3.1",
@@ -62,6 +66,8 @@
     "deploy:install": "bash deploy/install.sh",
     "deploy:status": "bash deploy/scripts/prod-status.sh",
     "deploy:validate": "bash deploy/scripts/validate-wizard.sh",
+    "deploy:test-e2e": "bash deploy/scripts/test-install-e2e.sh",
+    "deploy:test-e2e:quick": "bash deploy/scripts/test-install-e2e.sh --quick",
     "setup:local": "npm run sync:env && npm run dev:infra && npm run db:generate && npm run db:migrate:deploy && npm run db:seed",
     "sync:env": "node scripts/sync-local-env.mjs",
     "ensure:guest": "node scripts/ensure-guest-customer.mjs",

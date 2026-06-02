@@ -13,7 +13,9 @@ ENV NEXT_PUBLIC_MARKETING_WEB_URL=$NEXT_PUBLIC_MARKETING_WEB_URL
 COPY package.json package-lock.json ./
 COPY apps ./apps
 COPY packages ./packages
-RUN npm ci
+RUN npm ci \
+  && rm -rf node_modules/@types/react node_modules/@types/react-dom \
+  && npm install --no-save --ignore-scripts @types/react@18.3.12 @types/react-dom@18.3.1
 RUN npm run build -w @point/${APP}
 
 FROM node:20-bookworm-slim AS run

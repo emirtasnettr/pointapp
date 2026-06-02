@@ -166,4 +166,12 @@ generate_secrets() {
   if [[ ${#JWT_SECRET} -lt 32 ]]; then
     JWT_SECRET="$(generate_secret 64)"
   fi
+  if [[ ! "$POSTGRES_PASSWORD" =~ ^[A-Za-z0-9_-]+$ ]]; then
+    point_warn "POSTGRES_PASSWORD shell/Docker güvenli değil; otomatik üretiliyor."
+    POSTGRES_PASSWORD="$(generate_secret 32)"
+  fi
+  if [[ ! "$JWT_SECRET" =~ ^[A-Za-z0-9_-]+$ ]]; then
+    point_warn "JWT_SECRET shell/Docker güvenli değil; otomatik üretiliyor."
+    JWT_SECRET="$(generate_secret 64)"
+  fi
 }
