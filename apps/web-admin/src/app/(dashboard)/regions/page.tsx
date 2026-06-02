@@ -170,7 +170,7 @@ export default function RegionsPage() {
 
   const matrixQ = useQuery({
     queryKey: ['geography', 'price-matrix'],
-    queryFn: () => geoGet<MatrixResponse>('/staff/geography/price-matrix'),
+    queryFn: () => apiGet<MatrixResponse>('/staff/geography/price-matrix'),
     retry: 1,
   });
 
