@@ -44,7 +44,7 @@ grep -q 'CORS_ORIGINS=https://pointkurye.net.tr,https://www.pointkurye.net.tr,ht
   || say_fail "CORS: $(grep CORS_ORIGINS "$TMP_ENV")"
 
 echo "==> Caddyfile yer tutucuları"
-grep -q '{\$ADMIN_DOMAINS}' deploy/Caddyfile && say_ok 'ADMIN_DOMAINS bloğu' || say_fail 'Caddyfile ADMIN_DOMAINS'
+grep -q '{\$CADDY_ADMIN_DOMAINS}' deploy/Caddyfile && say_ok 'CADDY_ADMIN_DOMAINS bloğu' || say_fail 'Caddyfile CADDY_ADMIN_DOMAINS'
 
 echo "==> Docker Compose config"
 if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then

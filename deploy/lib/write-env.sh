@@ -19,6 +19,9 @@ write_deploy_env() {
   local pg_db="${POSTGRES_DB:-point}"
 
   local api_origin="https://${api_domain}"
+  # Caddy site labels space-separated, not comma-separated.
+  local caddy_admin_domains
+  caddy_admin_domains="$(echo "$admin_domains" | tr -d ' ' | tr ',' ' ')"
   local cors=""
   local h
   IFS=',' read -ra _adm <<< "$admin_domains"
@@ -51,6 +54,7 @@ POINT_SMS_SIMULATION=0
 
 API_DOMAIN=${api_domain}
 ADMIN_DOMAINS=${admin_domains}
+CADDY_ADMIN_DOMAINS=${caddy_admin_domains}
 ADMIN_DOMAIN=${admin_canonical}
 CUSTOMER_DOMAIN=${customer_domain}
 CADDY_EMAIL=${caddy_email}
