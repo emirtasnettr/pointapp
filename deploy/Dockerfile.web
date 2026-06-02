@@ -23,11 +23,13 @@ ARG APP=web-admin
 WORKDIR /app
 ENV NODE_ENV=production
 ENV APP_NAME=${APP}
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/apps/${APP}/.next ./apps/${APP}/.next
+# Next.js standalone output: runtime doesn't need `next` binary
+COPY --from=build /app/apps/${APP}/.next/standalone ./
+COPY --from=build /app/apps/${APP}/.next/static ./apps/${APP}/.next/static
 COPY --from=build /app/apps/${APP}/public ./apps/${APP}/public
 COPY --from=build /app/apps/${APP}/package.json ./apps/${APP}/package.json
-COPY --from=build /app/apps/${APP}/scripts ./apps/${APP}/scripts
 COPY package.json ./package.json
+ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
 EXPOSE 3000
-CMD ["sh", "-c", "if [ \"$APP_NAME\" = web-customer ]; then export WEB_CUSTOMER_PORT=3000; else export WEB_ADMIN_PORT=3000; fi && npm run start -w @point/$APP_NAME"]
+CMD ["sh", "-c", "node apps/$APP_NAME/server.js"]

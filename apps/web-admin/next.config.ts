@@ -9,6 +9,7 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  output: 'standalone',
   transpilePackages: ['@point/delivery-wizard'],
   eslint: { ignoreDuringBuilds: true },
   async headers() {
